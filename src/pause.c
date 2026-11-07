@@ -38,6 +38,7 @@
 #include "screen_fx.h"
 #include "sfx.h"
 #include "pause.h"
+#include "cjr.h"
 
 extern state_t *state;
 
@@ -128,6 +129,7 @@ static void thaw(i32 refresh_clock, i32 ctx, i32 reload) {
     /* last_global_animation_update, level_timer, special/bonus timers and
      * the energy / score stamps have no counterpart in the port. */
     dlg_time_shift(td);                                                   /* world_timer */
+    cjr_shift_time(td);                                                   /* bonus_timer */
     if (!reload) {
         if (c1 && E32(c1, 0xCE4)) E32(c1, 0xCE4) += td;
         if (c2 && E32(c2, 0xCE4)) E32(c2, 0xCE4) += td;

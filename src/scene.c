@@ -44,6 +44,7 @@
 
 #include "gamma.h"
 #include "envfx.h"
+#include "cjr.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -3240,6 +3241,11 @@ i32 scene_render(system_t *sys) {
     i32  fb_w = state->graphic.width;
     i32  fb_h = state->graphic.height;
     if (!fb) return 0;
+
+    /* Big animation (LIEU op 17, sub_454690): deltas land in the backdrop. */
+    if (cjr_active() && g_scene_bg_bmap && g_scene_bg_bmap->pixels)
+        cjr_tick(system_get_gametime(), (u8 *)g_scene_bg_bmap->pixels,
+                 (i32)g_scene_bg_bmap->width, g_scene_bg_bmap->height);
 
     /* Step 1 — plain F blit as backdrop. */
     if (g_scene_bg_bmap && g_scene_bg_bmap->pixels && g_scene_bg_bmap->palette) {

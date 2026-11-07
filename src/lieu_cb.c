@@ -46,6 +46,7 @@
 #include "screen_fx.h"
 #include "inventory.h"
 #include "scene.h"
+#include "cjr.h"
 #include "effect.h"
 #include "world.h"
 #include "music.h"
@@ -1206,8 +1207,9 @@ static i32 cb_divers(i32 op, i32 a, i32 b) {
         }
         return 0;
 
+    /* op 17 @ 0x447CBD — big animation biganims/ANIM0<a>.CJR (sub_454810). */
     case 17:
-        /* TODO CJR player */
+        cjr_start(state ? state->game_path : NULL, a, (i32)state->current_game_time);
         return 0;
 
     /* op 18 @ 0x447D09 — was actor a hit (+0xC74, set by

@@ -73,8 +73,9 @@ address in a comment.
 
 - LIEU op 42 fades and crossfades: `sub_42BE0E` with 0042BC7C, 0042BD44, 0042EA19, 0042EE82. There is a TODO in
   `lieu_cb.c`.
-- CJR big-animation player for LIEU op 17 and the type-12 effect: 00454690, 00454810, 00454C30, 00454CB0, 00454E00,
-  004552A0, 004553B0, 004555A0, 004556A0, 004557A0, 004557B0, 00455840, 00455890.
+- Done (`src/cjr.c`): the CJR big-animation player for LIEU op 17. CJR files are Autodesk FLC; only DELTA_FLC chunks occur.
+  Not done: blocking level exits and ESC while the animation runs (`bonus_mode_active` checks in 0044A58B, 00407159),
+  and the player/camera fall offset of sub_454690 for ANIM00 and ANIM02.
 
 ### 6. Movies
 
