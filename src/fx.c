@@ -29,6 +29,7 @@
 #include "state.h"
 #include "game_init.h"
 #include "fx.h"
+#include "sfx.h"
 
 #define FX_PUFFS      12
 #define FX_BLOOD_N    32
@@ -54,6 +55,19 @@ typedef struct {
 } puff_t;
 
 static puff_t     g_puff[FX_PUFFS];
+#define FX_BUBBLES 32
+typedef struct {
+    i32 on;          /* +0x70 */
+    i32 speed;       /* +0x34: 512..1535 */
+    i32 size;        /* +0x38: 128..255 */
+    i32 frame;       /* +0x30: BULLE image 0..3 */
+    i32 pos[3];      /* +0xA8..+0xB0 */
+    i32 t0;          /* +0xB4 */
+    i32 dead;
+} bubble_t;
+static bubble_t g_bubble[FX_BUBBLES];
+static i32 g_bub_last, g_bub_snd, g_bub_t0;   /* dword_4B4540 / dword_4B4544 / period origin */
+
 static particle_t g_blood[FX_BLOOD_N];
 static particle_t g_burst[FX_BURST_N];
 static i32        g_blood_on = 0, g_blood_t0 = 0;                 /* dword_4B4508 / dword_509ADC */
@@ -72,6 +86,8 @@ static i32 cos_at(i32 a) { return cosine_table[((u32)a >> 4) & 0xFFF]; }
 
 void fx_reset(void) {
     memset(g_puff, 0, sizeof(g_puff));
+    memset(g_bubble, 0, sizeof(g_bubble));
+    g_bub_last = g_bub_snd = g_bub_t0 = 0;
     g_blood_on = 0;
     g_burst_on = 0;
 }
@@ -306,6 +322,58 @@ static void burst_draw(u32 *fb, i32 fw, i32 fh, const bmap_t *zimg, const u8 *pa
     }
 }
 
+
+/* ---- air bubbles (underwater levels) ----------------------------------- */
+
+static const u8 k_bubble_frame[16] = { 0, 1, 2, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3 };   /* byte_4B4530 */
+
+// 00430081
+void fx_bubbles_tick(i32 now, const i32 *player) {
+    if (!g_bub_t0) g_bub_t0 = now;
+    /* The original keys the 6 s period on a player timer (+0xD5C); the port uses
+     * the time since the level started. */
+    i32 v9 = (i32)((double)(now - g_bub_t0) * 0.001) % 6;
+    i32 v18 = (now - g_bub_last) / 16;
+    for (i32 i = 0; i < FX_BUBBLES; i++) {
+        bubble_t *b = &g_bubble[i];
+        if (b->on) {
+            b->pos[1] += b->speed * (now - b->t0) / 1024;
+        } else if (v18 && !v9) {
+            if (now - g_bub_snd > 1000) {
+                sfx_bruitage("bubulles", player[0], player[2]);
+                g_bub_snd = now;
+            }
+            b->on = 1;
+            b->speed = rnd(0x400) + 512;
+            b->size = rnd(0x80) + 128;
+            b->frame = k_bubble_frame[rnd(16)];
+            b->t0 = now;
+            b->pos[0] = player[0] + rnd(0x1770);
+            b->pos[1] = player[1] + rnd(0x1770) + 18000;
+            b->pos[2] = player[2] + rnd(0x1770);
+            v18--;
+        }
+    }
+    if (!v9 || v18) g_bub_last = now;
+}
+
+static void bubbles_draw(u32 *fb, i32 fw, i32 fh, const bmap_t *zimg, const u8 *pal, i32 now) {
+    for (i32 i = 0; i < FX_BUBBLES; i++) {
+        bubble_t *b = &g_bubble[i];
+        if (!b->on) continue;
+        i32 age = now - b->t0;
+        i32 s = cosine_table[((u32)(((age << 9) + 8) >> 4) + 1024) & 0xFFF];   /* sine_table */
+        i32 q[3] = { b->pos[0] + (s >> 5), b->pos[1], b->pos[2] - (s >> 6) };
+        i32 sx, sy, cz;
+        if (!scene_fx_project(q[0], q[1], q[2], &sx, &sy, &cz)) { b->on = 0; continue; }   /* state 2 -> freed */
+        if (!cz) continue;
+        i32 zv = scene_fx_zval(b->pos[0], b->pos[1], b->pos[2]);
+        if (!zv) zv = 1;
+        i32 sz = -(720000 * b->size / 128 / cz) | 1;
+        blit_sprite(fb, fw, fh, zimg, pal, game_init_get_bubble(b->frame), sz, sx, sy, zv);
+    }
+}
+
 /* ---- update_game_hud ---------------------------------------------------- */
 
 void fx_draw(u32 *fb, i32 fw, i32 fh, const bmap_t *zimg, const u8 *pal, const u8 *grd, i32 now) {
@@ -321,6 +389,7 @@ void fx_draw(u32 *fb, i32 fw, i32 fh, const bmap_t *zimg, const u8 *pal, const u
         sz = (sz * p->size / 32) | 1;
         if (sz < 320) blit_sprite(fb, fw, fh, zimg, pal, game_init_get_smoke(p->frame), sz, sx, sy, zv);
     }
+    bubbles_draw(fb, fw, fh, zimg, pal, now);
     blood_draw(fb, fw, fh, zimg, pal, now);
     burst_draw(fb, fw, fh, zimg, pal, grd, now);
 }

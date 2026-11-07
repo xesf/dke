@@ -22,6 +22,7 @@
 #define ENVFX_MAX_CAMERAS 10      /* the original arrays hold 10 cameras */
 
 typedef struct {
+    i32 underwater;                    /* "underwater" key (render_mode_flag 1) */
     i32 ncamera;
     i32 env[ENVFX_MAX_CAMERAS][3];     /* envred/envgreen/envblue<N>          */
     i32 flash_present;                 /* "flash" key found                   */
@@ -38,6 +39,10 @@ void envfx_set_camera(i32 camera);
 
 /* Per frame, with the game clock in ms (0x42F565). */
 void envfx_tick(i32 now);
+
+/* render_mode_flag == 1: wavy full-screen warp (0x42FADF) and air bubbles
+ * (0x430081, see fx_bubbles_tick). */
+b8   envfx_underwater(void);
 
 /* Is any of the effects active for the frame? */
 b8   envfx_active(void);

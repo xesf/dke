@@ -424,6 +424,7 @@ static void scene_parse_envfx(const c8 *buf) {
     if (n > ENVFX_MAX_CAMERAS) n = ENVFX_MAX_CAMERAS;
     cfg.ncamera = n;
     cfg.flash_present = dat_has_key(buf, "flash");
+    parse_dat_int(buf, "underwater", &cfg.underwater);
     static const c8 *const env_k[3] = { "envred%d", "envgreen%d", "envblue%d" };
     static const c8 *const fl_k[3]  = { "flashred%d", "flashgreen%d", "flashblue%d" };
     for (i32 c = 0; c < n; c++) {
@@ -3575,6 +3576,8 @@ i32 scene_render(system_t *sys) {
              * @ 0x411333) flies and is posed like an actor; the puffs age (sub_42F31B). */
             combat_projectile_tick();
             fx_tick(state ? (i32)state->current_game_time : 0);
+            if (envfx_underwater() && g_player_entity && EROOT(g_player_entity))
+                fx_bubbles_tick(state ? (i32)state->current_game_time : 0, EROOT(g_player_entity)->pos);   /* 0x430081 */
             {
                 effect_draw_t pd;
                 if (combat_projectile_draw(&pd)) {

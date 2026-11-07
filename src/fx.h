@@ -28,6 +28,10 @@ void fx_puff_flame(const i32 *pos, i32 life);
 /* sub_42F476 @ 0x42F476: a 384 ms puff around `pos` (wall hit). */
 void fx_puff_spark(const i32 *pos);
 
+/* sub_430081 @ 0x430081 (underwater levels): once per frame, spawn and rise the 32
+ * air bubbles around `player` (world x, y, z). Drawn by fx_draw. */
+void fx_bubbles_tick(i32 now, const i32 *player);
+
 /* sub_42F31B @ 0x42F31B: once per frame, animate and age the puffs. */
 void fx_tick(i32 now);
 

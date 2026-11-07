@@ -192,6 +192,7 @@ typedef struct {
 static entity_display_t g_entity_display[ENTITY_DISPLAY_SLOTS];
 static bmap_t *g_display_surface = NULL;     /* dword_509260 */
 static void   *g_smoke_sprites[5] = {0};
+static void   *g_bubble_sprites[4] = {0};   /* dword_5099B0: BULLE1..4 */
 
 /* Secondary entity display (sub_42F88E) — 32 slots for NPC/companion render */
 #define SECONDARY_ENTITY_SLOTS 32
@@ -1326,6 +1327,11 @@ b8 game_init(state_t *state) {
         };
         for (i32 i = 0; i < 5; i++)
             g_smoke_sprites[i] = image_load_compressed(smoke_names[i], NULL);
+        for (i32 i = 0; i < 4; i++) {            /* sub_42F88E: BULLE%ld, 1..4 */
+            c8 bn[48];
+            snprintf(bn, sizeof(bn), "DATAS>GLOBAL>IMAGES>BULLE%d.GIF", i + 1);
+            g_bubble_sprites[i] = image_load_compressed(bn, NULL);
+        }
 
         for (i32 i = 0; i < ENTITY_DISPLAY_SLOTS; i++) {
             memset(&g_entity_display[i], 0, sizeof(g_entity_display[i]));
@@ -1872,4 +1878,5 @@ bmap_t *game_init_get_health_bmap(i32 slot) {
 }
 
 /* SMOKE0..4.GIF (dword_509260 @ 0x509260, loaded by sub_43040A): the smoke puffs. */
+bmap_t *game_init_get_bubble(i32 i) { return (i >= 0 && i < 4) ? (bmap_t *)g_bubble_sprites[i] : NULL; }
 bmap_t *game_init_get_smoke(i32 i) { return (i >= 0 && i < 5) ? (bmap_t *)g_smoke_sprites[i] : NULL; }

@@ -57,8 +57,8 @@ address in a comment.
 
 - Done (`src/envfx.c`): flash 0042F565/0046BE40 and environment tint 0040C010, applied to the frame at blit time.
 - Still to parse and use in `scene_load_dat_config`: clipzperso/clipzvague/multiclip (levels 38, 39), coloured lights `ncolorlight` (level 13).
-- Underwater and flash modes: 0042F31B, 00430081, 0042F565, 0042FADF. These add bubbles, a wavy full-screen distortion
-  and a palette flicker. `g_render_mode_flag` is never set.
+- Underwater mode (level 35): warp 0042FADF in `envfx.c` and bubbles 00430081 in `fx.c` are in. The bubble spawn period
+  uses time since level start, not the player timer at +0xD5C. `g_render_mode_flag` is still never set (HUD parts).
 - Low-detail actor path when multiclip is nonzero: 0042A5E3, 0042B63D, 0042B0A6.
 
 ### 4. Combat effects

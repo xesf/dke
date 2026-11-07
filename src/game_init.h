@@ -56,6 +56,7 @@ bmap_t *game_init_get_halfres_buffer(void);
 
 /* SMOKE0..4.GIF sprites (dword_509260 @ 0x509260), or NULL. */
 bmap_t *game_init_get_smoke(i32 i);
+bmap_t *game_init_get_bubble(i32 i);
 
 /* Accessor for INTFANI3 bmap (dword_4F4DF4 @ 0x4F4DF4). */
 bmap_t *game_init_get_intfani3(void);
