@@ -31,7 +31,8 @@ target_include_directories(dke PRIVATE ${ROOT}/src ${ROOT}/src/libsys)
 set_property(TARGET dke PROPERTY C_STANDARD 99)
 target_compile_definitions(dke PRIVATE PLATFORM_VITA _DEFAULT_SOURCE)
 # -fsigned-char: the engine was written for x86, where char is signed.
-target_compile_options(dke PRIVATE -O2 -Wall -fwrapv -fsigned-char
+target_compile_options(dke PRIVATE -O3 -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=hard -fno-math-errno
+                       -Wall -fwrapv -fsigned-char
                        -Wno-missing-braces -Wno-unused-function -Wno-unused-variable)
 target_link_libraries(dke SceDisplay_stub SceCtrl_stub SceAudio_stub
                       ScePower_stub SceSysmem_stub SceKernelThreadMgr_stub pthread m)

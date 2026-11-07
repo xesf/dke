@@ -38,6 +38,8 @@ static SceUID  s_fb_block[2];
 static int     s_back;
 static u32    *s_surface;            /* corrected copy of the frame */
 
+static void workers_start(void);
+
 static void *alloc_cdram(SceUID *block) {
     void *base = NULL;
     *block = sceKernelAllocMemBlock("dke fb", SCE_KERNEL_MEMBLOCK_TYPE_USER_CDRAM_RW, FB_SIZE, NULL);
@@ -73,6 +75,7 @@ i32 ls_init_instance(system_t *system, i32 width, i32 height, i32 bpp) {
     if (!s_surface) return 0;
     show(s_fb[0]);
     s_back = 1;
+    workers_start();
     sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG);
     return 1;
 }
@@ -123,8 +126,69 @@ void ls_set_title(system_t *system, c8 *title) { (void)system; (void)title; }
 
 /* ---- video --------------------------------------------------------------- */
 
+/* Scaling and presenting run on two worker threads (the Vita has three cores
+ * for games), so the engine can already simulate the next frame meanwhile.
+ * Worker 0 scales the top half and shows the frame; worker 1 the bottom half. */
+#define NWORK 2
+static SceUID s_go[NWORK], s_done[NWORK], s_wthread[NWORK];
+static volatile int s_wrun, s_w, s_h, s_pending;
+
+static int s_cols[SCREEN_W];
+
+static void scale_rows(int y0, int y1) {
+    const int out_w = SCREEN_H * s_w / s_h;
+    const int out_x = (SCREEN_W - out_w) / 2;
+    u32 *fb = (u32 *)s_fb[s_back];
+    for (int y = y0; y < y1; y++) {
+        const u32 *row = s_surface + (size_t)(y * s_h / SCREEN_H) * s_w;
+        u32 *out = fb + y * SCREEN_W + out_x;
+        for (int x = 0; x < out_w; x++) out[x] = row[s_cols[x]];
+    }
+}
+
+static int scale_thread(SceSize args, void *argp) {
+    int id = *(int *)argp;
+    (void)args;
+    for (;;) {
+        sceKernelWaitSema(s_go[id], 1, NULL);
+        if (!s_wrun) break;
+        scale_rows(id * SCREEN_H / NWORK, (id + 1) * SCREEN_H / NWORK);
+        if (id == 0) {
+            sceKernelWaitSema(s_done[1], 1, NULL);
+            show(s_fb[s_back]);
+            sceDisplayWaitVblankStart();
+            s_back ^= 1;
+            s_pending = 0;
+            sceKernelSignalSema(s_done[0], 1);
+        } else {
+            sceKernelSignalSema(s_done[1], 1);
+        }
+    }
+    return 0;
+}
+
+static void workers_start(void) {
+    static int ids[NWORK] = {0, 1};
+    s_wrun = 1;
+    for (int i = 0; i < NWORK; i++) {
+        s_go[i] = sceKernelCreateSema("dke go", 0, 0, 1, NULL);
+        s_done[i] = sceKernelCreateSema("dke done", 0, 0, 1, NULL);
+    }
+    for (int i = 0; i < NWORK; i++) {
+        s_wthread[i] = sceKernelCreateThread("dke scale", scale_thread, 0x10000100 - 5,
+                                             0x4000, 0, i == 0 ? 0x20000 : 0x40000, NULL);
+        if (s_wthread[i] >= 0) sceKernelStartThread(s_wthread[i], sizeof(int), &ids[i]);
+    }
+}
+
+static void wait_presented(void) {
+    if (!s_pending) return;
+    sceKernelWaitSema(s_done[0], 1, NULL);
+}
+
 void ls_blit(system_t *system, u32 *front_buffer) {
     if (!s_surface || !front_buffer) return;
+    wait_presented();                       /* previous frame is on screen */
     int n = system->width * system->height;
     memcpy(s_surface, front_buffer, (size_t)n * sizeof(u32));
     envfx_apply_pixels(s_surface, n);
@@ -132,29 +196,26 @@ void ls_blit(system_t *system, u32 *front_buffer) {
 
     /* 4:3 in the middle of the panel: 725 x 544, nearest neighbour. */
     const int out_w = SCREEN_H * system->width / system->height;
-    const int out_x = (SCREEN_W - out_w) / 2;
-    static int cols[SCREEN_W], cols_for;
+    static int cols_for;
     if (cols_for != system->width) {
-        for (int x = 0; x < out_w; x++) cols[x] = x * system->width / out_w;
+        for (int x = 0; x < out_w; x++) s_cols[x] = x * system->width / out_w;
         cols_for = system->width;
     }
-    u32 *fb = (u32 *)s_fb[s_back];
-    for (int y = 0; y < SCREEN_H; y++) {
-        const u32 *row = s_surface + (size_t)(y * system->height / SCREEN_H) * system->width;
-        u32 *out = fb + y * SCREEN_W + out_x;
-        for (int x = 0; x < out_w; x++) out[x] = row[cols[x]];
-    }
+    s_w = system->width;
+    s_h = system->height;
+    s_pending = 1;
+    for (int i = 0; i < NWORK; i++) sceKernelSignalSema(s_go[i], 1);
 }
 
 void ls_flip(system_t *system) {
-    (void)system;
-    show(s_fb[s_back]);
-    sceDisplayWaitVblankStart();
-    s_back ^= 1;
+    (void)system;                           /* the worker shows the frame */
 }
 
 void ls_release(system_t *system) {
     (void)system;
+    wait_presented();
+    s_wrun = 0;
+    for (int i = 0; i < NWORK; i++) sceKernelSignalSema(s_go[i], 1);
     for (int i = 0; i < 2; i++)
         if (s_fb[i]) { sceKernelFreeMemBlock(s_fb_block[i]); s_fb[i] = NULL; }
     free(s_surface);
