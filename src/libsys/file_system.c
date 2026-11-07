@@ -7,7 +7,11 @@
 #include "common.h"
 
 inline const c8* ls_get_base_path() {
+#ifdef PLATFORM_VITA
+    return "ux0:data/dke";             /* the game data is copied here */
+#else
     return getcwd(NULL, 0);
+#endif
 }
 
 inline bool ls_exists(const c8* path) {

@@ -64,3 +64,4 @@ bin/game/*
 *.til
 __pycache__/
 disassembly/
+build/

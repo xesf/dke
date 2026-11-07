@@ -57,3 +57,10 @@ clean:
 	rm -f $(BIN)/dke $(BIN)/dke.exe
 
 .PHONY: dke run clean
+
+# PlayStation Vita: platforms/vita/CMakeLists.txt -> build/vita/dke.vpk
+VITASDK ?= $(HOME)/vitasdk
+.PHONY: vita
+vita:
+	VITASDK=$(VITASDK) PATH="$(VITASDK)/bin:$$PATH" cmake -S platforms/vita -B build/vita
+	VITASDK=$(VITASDK) PATH="$(VITASDK)/bin:$$PATH" cmake --build build/vita --parallel
