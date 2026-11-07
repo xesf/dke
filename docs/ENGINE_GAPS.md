@@ -79,10 +79,10 @@ address in a comment.
 
 ### 6. Movies
 
-- Subtitles: 00430D06, 004311BE, 00431216, 00431298, 004314A2, 00432799.
+- Done: subtitles (`DATAS>SBT>SC<nn>_<lang>.TXT`, drawn with the game font at y = 452), the `_nnn` start frame, and the OVER
+  card after movies 16, 21, 22 and 23 (`movie.c`, `scene.c`). Not run against a real movie yet.
 - Colour correction (brightness, contrast, gamma tables): 00431D38, 004327B2, 00432A3B, 00432BE1, 00432D7D.
 - End fade 004330DD.
-- The OVER card `sub_444B10` (OVER.CIF and OVER.WAV for 3 s) after movies 16, 21, 22 and 23, reached through `sub_444BF7`.
 
 ### 7. Objects across levels
 

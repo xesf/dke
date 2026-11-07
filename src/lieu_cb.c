@@ -407,6 +407,7 @@ static void cb_evenement(i32 id, i32 p) {
  * from the render phase (scene_render), not from here (called mid INIT /
  * mid update; playing synchronously re-enters the frame loop). */
 static c8  g_lieu_movie[64];
+static i32 g_lieu_movie_start;
 static i32 g_lieu_movie_pending = 0;
 /* RetireZone / Fouille clear BOTH the centre (dword_506C80 = -1) and the
  * attached entity (dword_506CA0 = -1). The port's cb_93C clears only the
@@ -435,6 +436,8 @@ static void cb_cinematique(const c8 *name) {
     lieu_action_t *n = lieu_action_push(LA_CINEMA);
     if (name) snprintf(n->name, sizeof(n->name), "%s", name);
 }
+
+i32 lieu_movie_start(void) { return g_lieu_movie_start; }
 
 /* Drained by scene_render: returns a queued cutscene path (or NULL). */
 const c8 *lieu_poll_movie(void) {
@@ -1814,7 +1817,7 @@ static void cinema_play(const c8 *arg) {
     /* Movies 16, 21, 22, 23 are endings: played with the skip callback
      * sub_444B10, then the three buffers are cleared and game_exit_code = 3. */
     if (num == 16 || num == 21 || num == 22 || num == 23) g_game_exit_code = 3;
-    (void)start;
+    g_lieu_movie_start = start;
     print("lieu_act: CINEMA %s (start %d)\n", g_lieu_movie, start);
     /* After the movie: ls_flush_keyboard, clear screen, default palette and
      * spin until ESC is released. */

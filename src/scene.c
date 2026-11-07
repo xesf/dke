@@ -45,6 +45,7 @@
 #include "gamma.h"
 #include "envfx.h"
 #include "cjr.h"
+#include "libsys/audio/wav.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -3006,6 +3007,45 @@ static i32 scene_autowalk_on(void) {
     return t - t0 >= (u32)atoi(getenv("DKE_AUTOWALK"));
 }
 
+/* sub_415CC0 as the movie subtitle callback: the line is centred at y = 452. */
+static void movie_subtitle(const c8 *text, u32 *fb, i32 w, i32 h) {
+    (void)fb; (void)h;
+    if (!g_gamecfg.subtitles) return;                       /* byte_4B60AC */
+    i32 tw = (i32)strlen(text) * 8;                         /* same width estimate as the dialogue bar */
+    draw_text_at(font_handle, (w - tw) / 2, 452, text, 0xFFFFFFFFu);
+}
+
+/* sub_444B10: the OVER card after the ending movies (16, 21, 22, 23): OVER.CIF
+ * and OVER.WAV for three seconds. */
+static void movie_over_card(void) {
+    if (!state) return;
+    bmap_t *img = game_init_load_cursor("DATAS>L01>IMAGES>OVER.CIF");
+    if (!img) return;
+    u32 *fb = state->graphic.front_buffer;
+    i32 fw = state->graphic.width, fh = state->graphic.height;
+    if (fb && img->pixels && img->palette) {
+        memset(fb, 0, (size_t)fw * fh * sizeof(u32));
+        blit_bmap_to_framebuffer(fb, fw, fh, img, img->palette,
+                                 fw > img->width ? (fw - img->width) / 2 : 0,
+                                 fh > img->height ? (fh - img->height) / 2 : 0);
+    }
+    wav_t w = {0};
+    c8 p[512];
+    snprintf(p, sizeof(p), "%s/datas/sound/OVER.WAV", state->game_path ? state->game_path : ".");
+    b8 have = wav_load(&w, p);
+    if (have && state->audio_enabled) sfx_ui_play(&w, 0, 0);
+    u32 t0 = ls_tick();
+    while ((u32)(ls_tick() - t0) < 3000) {                  /* ls_delay(3000) */
+        ls_blit(&state->system, fb);
+        ls_flip(&state->system);
+        ls_update_events(&state->system);
+        if (state->system.quit) break;
+        ls_delay(16);
+    }
+    if (have) wav_free(&w);
+    scene_free_bmap(&img);
+}
+
 i32 scene_render(system_t *sys) {
     envfx_tick(system_get_gametime());             /* 0x42F565 */
     if (!state) return 0;
@@ -3206,7 +3246,15 @@ i32 scene_render(system_t *sys) {
         const c8 *mv = lieu_poll_movie();
         if (mv) {
             if (getenv("DKE_NOMOVIE")) print("scene: DKE_NOMOVIE skip movie %s\n", mv);
-            else                     { music_stop(0); ls_play_movie(mv); }   /* sub_444BF7 */
+            else {                                                      /* sub_444BF7 */
+                music_stop(0);
+                ls_set_movie_subtitles(movie_subtitle, dlg_lang_code(state ? state->language_id : 0));
+                ls_set_movie_start(lieu_movie_start());
+                i32 mnum = atoi(mv + 2);
+                if (mnum == 16 || mnum == 21 || mnum == 22 || mnum == 23)
+                    ls_set_movie_end_card(movie_over_card);
+                ls_play_movie(mv);
+            }
         }
     }
 

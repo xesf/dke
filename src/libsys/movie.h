@@ -27,3 +27,16 @@ void ls_shut_movie(void);
 
 /* skeleton — logs and returns without decoding. */
 void ls_play_movie(const c8 *path);
+
+/*
+ * Per-movie options for the next ls_play_movie call (reset after it).
+ *   ls_set_movie_subtitles  0x432799: text callback, called every frame with the
+ *                           line due (sub_415CC0 in the game).
+ *   subtitle file           DATAS>SBT>SC<nn>_<lang>.TXT, "mm:ss:ff mm:ss:ff {text}".
+ *   start frame             the "_500" suffix of the CINEMA name.
+ *   end card                the callback of ls_play_movie (sub_444B10, OVER card).
+ */
+typedef void (*ls_movie_sbt_fn)(const c8 *text, u32 *fb, i32 w, i32 h);
+void ls_set_movie_subtitles(ls_movie_sbt_fn cb, const c8 *lang);
+void ls_set_movie_start(i32 frame);
+void ls_set_movie_end_card(void (*cb)(void));

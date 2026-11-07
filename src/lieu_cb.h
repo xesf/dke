@@ -177,6 +177,7 @@ i32 lieu_detect_zone(void);
 /* Cutscene queued by cb_cinematique. Returns the "SCnn.CRH" path to play
  * (once), or NULL. Drained by scene_render (safe render context). */
 const c8 *lieu_poll_movie(void);
+i32 lieu_movie_start(void);   /* the _500 suffix: first frame */
 
 /* CHANGEPIECE (opcode 10): pending room-change target level id (or -1 if
  * none). Set when the LIEU script calls slot 10 to walk to another room.

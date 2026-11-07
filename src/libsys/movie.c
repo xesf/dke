@@ -190,6 +190,55 @@ void ls_shut_movie(void) {
  *   cine_clear_movie_background → front_buffer zeroed after playback
  *   cp_restore_screen thread → not needed; blit+flip per frame is synchronous
  */
+/* ---- per-movie options (see movie.h) ----------------------------------- */
+
+static ls_movie_sbt_fn s_sbt_cb;
+static c8   s_sbt_lang[8];
+static i32  s_start_frame;
+static void (*s_end_card)(void);
+
+void ls_set_movie_subtitles(ls_movie_sbt_fn cb, const c8 *lang) {
+    s_sbt_cb = cb;
+    snprintf(s_sbt_lang, sizeof(s_sbt_lang), "%s", lang ? lang : "US");
+}
+void ls_set_movie_start(i32 frame) { s_start_frame = frame > 0 ? frame : 0; }
+void ls_set_movie_end_card(void (*cb)(void)) { s_end_card = cb; }
+
+typedef struct { i32 start, end; c8 text[256]; } sbt_line_t;
+#define SBT_MAX 256
+
+/* 0x430E15 read_and_init_sbt: time = 900*mm + 15*ss + ff/2 (15 fps frames). */
+static i32 sbt_load(const c8 *path_hint, const c8 *lang, sbt_line_t *out) {
+    /* "…/SC21.CRH" -> 21 */
+    const c8 *b = path_hint;
+    for (const c8 *p = path_hint; *p; p++) if (*p == '/' || *p == '\\' || *p == '>') b = p + 1;
+    if ((b[0] | 0x20) != 's' || (b[1] | 0x20) != 'c') return 0;
+    i32 num = atoi(b + 2);
+    c8 vpath[64], host[512];
+    snprintf(vpath, sizeof(vpath), "DATAS>SBT>SC%02d_%s.TXT", num, lang);
+    const c8 *gp = (state && state->game_path) ? state->game_path : ".";
+    if (!ls_resolve_path(gp, vpath, host, (i32)sizeof(host))) return 0;
+    FILE *f = ls_open(host, "rb");
+    if (!f) return 0;
+    i32 n = 0;
+    c8 line[512];
+    while (n < SBT_MAX && fgets(line, sizeof(line), f)) {
+        i32 a1, a2, a3, b1, b2, b3;
+        if (sscanf(line, "%d:%d:%d %d:%d:%d", &a1, &a2, &a3, &b1, &b2, &b3) != 6) continue;
+        const c8 *o = strchr(line, '{'), *e = o ? strchr(o, '}') : NULL;
+        if (!o || !e) continue;
+        sbt_line_t *s = &out[n++];
+        s->start = 900 * a1 + 15 * a2 + a3 / 2;
+        s->end   = 900 * b1 + 15 * b2 + b3 / 2;
+        i32 len = (i32)(e - o - 1);
+        if (len > 255) len = 255;
+        memcpy(s->text, o + 1, (size_t)len);
+        s->text[len] = '\0';
+    }
+    ls_close(f);
+    return n;
+}
+
 static void play_movie_impl(const c8 *path) {
     if (!path || !path[0]) {
         printf("ls_play_movie: null/empty path\n");
@@ -287,6 +336,12 @@ static void play_movie_impl(const c8 *path) {
     u32 decoded = 0, shown = 0, t0 = 0;
     b8  eof = false;
 
+    static sbt_line_t sbt[SBT_MAX];
+    i32 sbt_n = s_sbt_cb ? sbt_load(path, s_sbt_lang, sbt) : 0;
+    i32 first_frame = s_start_frame;
+    for (i32 k = 0; k < first_frame; k++)            /* start offset: decode, drop */
+        if (!crh_next_frame_ex(&r, rgb_buf, NULL)) { eof = true; break; }
+
     for (;;) {
         /* Keep the decoder MOVIE_LEAD frames ahead of the display. */
         while (!eof && decoded < shown + MOVIE_LEAD + 1) {
@@ -346,6 +401,16 @@ static void play_movie_impl(const c8 *path) {
             }
         }
 
+        /* 0x431216 show_sbt: the line whose [start, end) holds this frame. */
+        if (sbt_n && graphic && graphic->front_buffer) {
+            i32 fno = first_frame + (i32)shown - 1;
+            for (i32 k = 0; k < sbt_n; k++)
+                if (fno >= sbt[k].start && fno < sbt[k].end) {
+                    s_sbt_cb(sbt[k].text, graphic->front_buffer, graphic->width, graphic->height);
+                    break;
+                }
+        }
+
         /* Blit + flip */
         if (sys) {
             ls_blit(sys, graphic ? graphic->front_buffer : NULL);
@@ -381,5 +446,9 @@ static void play_movie_impl(const c8 *path) {
 void ls_play_movie(const c8 *path) {
     gamma_bypass(1);
     play_movie_impl(path);
+    if (s_end_card && !(state && state->system.quit)) s_end_card();   /* ls_play_movie's callback */
     gamma_bypass(0);
+    s_sbt_cb = NULL;                       /* the options last for one movie */
+    s_start_frame = 0;
+    s_end_card = NULL;
 }
