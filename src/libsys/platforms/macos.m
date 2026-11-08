@@ -261,6 +261,9 @@ static void handle_events(system_t *system, i32 type, i32 key) {
         case 0x74: system->actions[33] = type; break;
         case 0x79: system->actions[34] = type; break;
         case 0x7A: system->actions[112] = type; break;
+        // F2 / F3 → actions[121] / [122]: in-game save / load screens
+        case 0x78: system->actions[121] = type; break;
+        case 0x63: system->actions[122] = type; break;
         // Space (keyCode 49) → actions[32] (VK_SPACE: action / talk key)
         case 0x31:
             system->actions[32] = type;

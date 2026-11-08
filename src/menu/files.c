@@ -879,8 +879,7 @@ i32 menu_files_run(void) {
     return files_run(0);
 }
 
-/* In-game F2: sub_43E038(0, 0). Not declared in screens.h yet. */
-i32 menu_files_save_run(void);
+/* In-game F2: sub_43E038(0, 0). */
 i32 menu_files_save_run(void) {
     return files_run(1);
 }

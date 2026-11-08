@@ -1055,10 +1055,27 @@ static i32 cb_divers(i32 op, i32 a, i32 b) {
      *   max = word_4DC020[idx*10+v*2];
      * else resource_table[...] = max * b / 100. */
     case 5:
-        /* TODO inventory/resource tables (resource_table @ 0x4DBBE0,
-         * word_4DC020) are static in game_init.c; needs an accessor and
-         * get_entity_character / get_character_action_index. */
-        return 0;
+        {
+            c8 nm[16] = {0};
+            entity_t *c1 = g_companion_entity, *c2 = g_secondary_companion_entity;
+            if (a == 0) {
+                entity_t *p = g_player_entity;
+                game_object_t *o = p ? (game_object_t *)EPTR(p, 0xD64) : NULL;
+                if (!o) return 0;
+                snprintf(nm, sizeof(nm), "%s", o->name);
+            } else {
+                i32 n1 = -1, n2 = -1;
+                if (c1 && ESTR(c1, 0xD8)[0]) sscanf(ESTR(c1, 0xDA), "%02d", &n1);
+                if (c2 && ESTR(c2, 0xD8)[0]) sscanf(ESTR(c2, 0xDA), "%02d", &n2);
+                if (a == n1)      snprintf(nm, sizeof(nm), "%s", ESTR(c1, 0xD8));
+                else if (b == n2) snprintf(nm, sizeof(nm), "%s", ESTR(c2, 0xD8));
+                else {
+                    print("DIVERS 5 : no persos have object %d\n", a);
+                    snprintf(nm, sizeof(nm), "OB%02d", a);
+                }
+            }
+            return inv_resource_pct(nm, b);
+        }
 
     /* op 6 @ 0x44750A — persona HP (desc+0x84). b<0 -> read; else write and
      * refresh the HUD: player -> update_player_interface(game_context, 1),
@@ -1269,7 +1286,7 @@ static i32 cb_divers(i32 op, i32 a, i32 b) {
      * sub_43E038(0,0) (native screen); update_display_state. Mode 0xE. */
     case 22:                                   /* 0x447EAC */
         screen_dissolve(500);
-        /* TODO sub_43E038(0, 0): the save / load file screen. */
+        menu_files_save_run();                 /* sub_43E038(0, 0) */
         return 0;
 
     case 23:
@@ -1328,9 +1345,13 @@ static i32 cb_divers(i32 op, i32 a, i32 b) {
     /* op 25 @ 0x44828D — give/take item: target_entity = byte_4DB3C0, name
      * "OB%02d"(a), +0xC4 &= ~0x20. b<=0 -> sub_426A24(obj) (remove);
      * else sub_427816() (re-equip held) + sub_42639A(obj, b, 1) (add b). */
-    case 25:
-        /* TODO inventory */
+    case 25: {
+        c8 nm[16];
+        snprintf(nm, sizeof(nm), "OB%02d", a);
+        if (b > 0) { inv_sort(); inv_add(nm, b, 1); }
+        else inv_remove_one(nm);
         return 0;
+    }
 
     /* op 26 @ 0x4482F6 — row a of word_509B40 (8 i16).
      * |b| > 99 -> log "DIVERS(26,%d,%d) : multiple is not impl..." (continues).

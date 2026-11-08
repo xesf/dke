@@ -328,6 +328,23 @@ void inv_remove_one(c8 *obj_name /* obj+0xA8, letter rewritten */) {
 }
 
 /*
+ * DIVERS op 5 (0x446E19): charge of an object's weapon row in resource_table,
+ * as a percentage of the full charge. b == -1 reads it (0 when the row has
+ * no maximum), otherwise sets it to b percent. name = the object name with
+ * its instance letter at [4]. Returns the percentage, 0 when it has no row.
+ */
+i32 inv_resource_pct(const c8 *name, i32 b) {
+    i32 id = inv_name_id(name);
+    const obj_record_t *r = id ? obj_rec(id) : NULL;
+    if (!r || !(r->flags & 2)) return 0;
+    i32 k = r->arme, v = name[4] ? name[4] - 'A' : 0;
+    if (k <= 0 || k >= OBJ_RES_ROWS || v < 0 || v >= OBJ_RES_COLS) return 0;
+    i32 mx = g_obj_res_init[k][v];
+    if (b != -1) { g_obj_res[k][v] = (i16)(b * mx / 100); return 0; }
+    return mx ? g_obj_res[k][v] * 100 / mx : 0;
+}
+
+/*
  * sub_426BB5(obj, on): set/clear the "equipped" byte of the matching
  * entry. When equipping it also clears world-instance bit 0x02 of the
  * entity's slot/variant (byte_4DCCC0[slot*6+v] &= ~2) or, without a slot,

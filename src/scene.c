@@ -62,6 +62,7 @@
 #include "libsys/graphics/shading.h"
 #include "state.h"
 #include "scene.h"
+#include "menu/screens.h"
 #include "actor.h"
 #include "game_init.h"
 #include "world.h"
@@ -3102,6 +3103,15 @@ i32 scene_render(system_t *sys) {
         if (ik && !s_i_prev && ((!g_player_movement_locked && g_ui_state == 1) || forced))
             inventory_screen_open();
         s_i_prev = ik;
+    }
+    /* F2 / F3: the save and load screens, when the player is free. */
+    {
+        static i32 s_f2_prev = 0, s_f3_prev = 0;
+        i32 f2 = sys ? sys->actions[121] : 0, f3 = sys ? sys->actions[122] : 0;
+        i32 free_ = !g_player_movement_locked && g_ui_state == 1 && !cjr_active();
+        if (f2 && !s_f2_prev && free_) menu_files_save_run();
+        if (f3 && !s_f3_prev && free_) menu_files_run();
+        s_f2_prev = f2; s_f3_prev = f3;
     }
     /* 'P' (process_input_command 0x407159, VK 80): the pause screen. The
      * original tests the key held, so the screen is entered on the press. */

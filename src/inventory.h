@@ -36,6 +36,10 @@ i32  etat_objet_item(etat_item_t *a, i32 had_s_prefix);
 void inv_use_by_name(const c8 *name, i32 add);
 /* Hotkey slot k (0..8) -> stored item name ("" when free). */
 const c8 *inv_hotkey(i32 k);
+/* DIVERS op 5: weapon charge in percent (b == -1 reads, else sets). */
+i32  inv_resource_pct(const c8 *name, i32 b);
+/* sub_426A24: take one away (name = object name, letter at [4]). */
+void inv_remove_one(c8 *obj_name);
 /* sub_427816: held object first, linked objects grouped. */
 void inv_sort(void);
 /* sub_4727C7: may this item be drawn during a fight (level 35)? */

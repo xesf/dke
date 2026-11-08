@@ -11,6 +11,7 @@
 
 #include "libsys/common.h"
 
+i32  menu_files_save_run(void);   /* sub_43E038(0, 0): save screen */
 i32  menu_files_run(void);      /* sub_43E038: save / load; 1 = a game was loaded */
 void menu_persos_run(void);     /* sub_43F8C7: characters */
 void menu_gamma_run(void);      /* 0x442B29 / 0x40ADE0: first-run gamma picker */
