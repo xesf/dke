@@ -793,6 +793,15 @@ b8 sfx_voice_busy(void) {
 }
 
 /* Cut the dialogue line short; leaves a one-shot in slot 0 alone. */
+/* sub_44E46A(0) and sub_44E46A(1): free the voice / one-shot slot and the AMB
+ * loop slot (the level script starts its ambience again). */
+void sfx_free_slots(void) {
+    audio_lock();
+    inst_free(SFX_INST_VOICE);
+    inst_free(SFX_INST_AMB);
+    audio_unlock();
+}
+
 void sfx_voice_stop(void) {
     audio_lock();
     if (g_inst_dialog) inst_free(SFX_INST_VOICE);

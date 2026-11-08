@@ -1262,11 +1262,10 @@ static i32 cb_divers(i32 op, i32 a, i32 b) {
         }
         return 0;
 
-    /* op 19 @ 0x447E4E — return sub_4272B0(): run "hotel.dll" (inn menu),
+    /* op 19 @ 0x447E4E — return sub_4272B0(): run "hotel.dll" (an Othello game),
      * frees sound slots 0/1, returns dword_4B33F4. */
     case 19:
-        /* TODO hotel menu */
-        return 0;
+        return menu_hotel_run();               /* sub_4272B0: Othello vs Armal; 1 / 2 / 3 */
 
     /* op 20 @ 0x447E58 — score_counter (HUD bar, 0..0x3FF). a<0 -> read,
      * else write + update_player_interface(ctx, 1). */
