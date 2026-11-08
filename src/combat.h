@@ -29,6 +29,8 @@ void player_input_tick(void);                  /* sub_46642E player half */
 void combat_aim_pose(entity_t *e);             /* sub_41CCB7 @ 0x41D3D8 */
 i32  weapon_take(game_object_t *o);            /* sub_47398A */
 i32  weapon_holster(game_object_t *o, i32 mode);   /* sub_473DBC */
+void weapon_link(entity_t *e, game_object_t *o, i32 hand);   /* sub_47404E (LinkObjet b != 0) */
+void weapon_unlink(entity_t *e);                              /* sub_474462 (LinkObjet b == 0) */
 void weapon_detach(entity_t *e, i32 slot);         /* sub_4735A2: object off the hand */
 
 /* combat_damage.c */

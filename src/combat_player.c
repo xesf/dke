@@ -853,6 +853,9 @@ static void bones_rebind(entity_t *e) {
     }
 }
 
+void weapon_detach(entity_t *e, i32 slot);
+static i32 s_hand_override = -1;          /* sub_47404E: the script's palm bone */
+
 /* sub_473756 @ 0x473756 (ecx = actor, edx = object, arg0 = full). */
 void weapon_attach(entity_t *e, game_object_t *o, i32 full) {
     obc_node_t *root = o ? o->root : NULL;
@@ -872,8 +875,33 @@ void weapon_attach(entity_t *e, game_object_t *o, i32 full) {
     /* sub_474731 (weapon_resolve_conflicts in scene.c): take it from any
      * other actor holding it, then: */
     EPTR(e, 0xD64) = o;
-    if (full || e == g_player_entity) bone_link(e, 0x1B, 0x1F);          /* right palm */
+    if (s_hand_override >= 0) bone_link(e, s_hand_override, 0x1F);
+    else if (full || e == g_player_entity) bone_link(e, 0x1B, 0x1F);     /* right palm */
     else                              bone_link(e, DESC_HAND(e), 0x1F);  /* persona hand */
+}
+
+/* LinkObjet with b != 0 (sub_47404E): `e` takes object `o` in the palm bone `hand`. */
+void weapon_link(entity_t *e, game_object_t *o, i32 hand) {
+    if (!e || !o || !o->root || !EDESC(e)) return;
+    game_object_t *old = (game_object_t *)EPTR(e, 0xD64);
+    if (old && old != o) {                                   /* sub_472B47(old) */
+        weapon_detach(e, 0);
+        EPTR(e, 0xD64) = NULL;
+    }
+    s_hand_override = hand;
+    weapon_attach(e, o, 1);
+    s_hand_override = -1;
+    snprintf(ESTR(e, 0xD8), 8, "%s", o->name);               /* +0xD8 = (v6+168) copied to +216 */
+}
+
+/* LinkObjet with b == 0 (sub_474462): `e` lets go of what it holds. */
+void weapon_unlink(entity_t *e) {
+    if (!e) return;
+    game_object_t *o = (game_object_t *)EPTR(e, 0xD64);
+    if (!o) return;
+    weapon_detach(e, 0);
+    EPTR(e, 0xD64) = NULL;
+    ESTR(e, 0xD8)[0] = 0;
 }
 
 /* sub_4735A2 @ 0x4735A2 (ecx = actor, edx = slot 0/1): give the object its

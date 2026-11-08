@@ -85,9 +85,10 @@ address in a comment.
 
 ### 7. Objects across levels
 
-- Object positions remembered per level: 0047306E, 0047347E.
-- Object slot cleanup on level load: 00476E86.
-- The remaining equip form 0047404E. `scene_weapon_entity_attach` covers only the `sub_473756` form.
+- Done: LIEU LinkObjet (`LA_LINKOBJET`, 0x44B... case 0x20) now takes and releases the object for real: `weapon_link`
+  (sub_47404E, palm bone from the script, word_509B40 row updated) and `weapon_unlink` (sub_474462). Not run in a level yet.
+- Not needed: 0047306E and 00476E86 only keep a dropped item's position until the level is released, which the port's
+  per-level object reset already does. 0047347E is the debug object editor.
 
 ### 8. Renderer fidelity
 

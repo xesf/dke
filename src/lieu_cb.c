@@ -2233,11 +2233,40 @@ i32 lieu_action_dispatch(lieu_action_t *n, u32 now_ms) {
         return 1;
     }
 
-    case LA_LINKOBJET: {                       /* case 0x20 */
-        lieu_obj_t *o = obj_find(n->name, 1);
-        if (o) o->linked_to = n->actor;
-        print("lieu_act: LINKOBJET '%s' -> holder %d (%d,%d)\n",
-              n->name, n->actor, n->p54, n->num5C);
+    case LA_LINKOBJET: {                       /* case 0x20 @ 0x44B... */
+        lieu_obj_t *lo = obj_find(n->name, 1);
+        if (lo) lo->linked_to = n->actor;
+        entity_t *holder = actor_find(n->actor);               /* sub_44411D */
+        game_object_t *obj = object_get(n->name);              /* sub_475BB6 */
+        if (!holder || !EDESC(holder)) {
+            print("lieu_act: LINKOBJET %s: persona %d not found\n", n->name, n->actor);
+            return 1;
+        }
+        if (EDESC(holder)[150]) {                              /* *(desc + 150) */
+            print("lieu_act: LINKOBJET %s: persona %d unusable\n", n->name, n->actor);
+            return 1;
+        }
+        i16 *row = (n->actor >= 0 && n->actor < LO_TAB509B40_ROWS) ? &g_tab_509B40[n->actor * 8] : NULL;
+        i32 nn = 0;
+        if (n->name[0] && n->name[1] && n->name[2]) nn = atoi(n->name + 2);
+        i32 variant = n->name[4] ? (n->name[4] - 'A') : 0;     /* sub_471BDF: letter + 1 */
+        variant = (variant < 0 ? 0 : variant) + 1;
+        if (n->num5C) {                                        /* sub_47404E: take */
+            if (obj) weapon_link(holder, obj, n->p54);
+            if (row && obj) {
+                for (i32 i = 0; i < 8; i++)
+                    if (row[i] % 100 == nn && (row[i] / 100 == variant || !(row[i] / 100))) goto have;
+                for (i32 i = 0; i < 8; i++)
+                    if (!row[i]) { row[i] = (i16)(nn + 100 * variant); break; }
+            have:;
+            }
+        } else {                                               /* sub_474462: let go */
+            weapon_unlink(holder);
+            if (obj) object_world_remove(n->name);
+            if (row)
+                for (i32 i = 0; i < 8; i++)
+                    if (row[i] % 100 == nn && (row[i] / 100 == variant || !(row[i] / 100))) row[i] = 0;
+        }
         return 1;
     }
 
