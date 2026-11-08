@@ -141,6 +141,7 @@ i32 ome_load_matr(const u8 *file, i32 size, ome_matr_t *out) {     /* sub_44F92D
         mt->x = read_i32_le(r + 0x30); mt->y = read_i32_le(r + 0x34);
         mt->w = read_i32_le(r + 0x38); mt->h = read_i32_le(r + 0x3C);
         mt->bitmap = read_i32_le(r + 0x44);
+        mt->flags = read_i32_le(r + 0x40);
         if (mt->bitmap < 0) mt->bitmap = 0;
         if (nbitmaps > 0 && mt->bitmap >= nbitmaps) mt->bitmap = nbitmaps - 1;
         out->slot_map[sl] = (i8)out->mat_count++;

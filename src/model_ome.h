@@ -79,6 +79,7 @@ typedef struct {
     c8   name[16];
     i32  x, y, w, h;    /* rect in the texture atlas */
     i32  bitmap;        /* +0x44: index into the library's bitmaps */
+    i32  flags;         /* +0x40: bit 0x200 = colour key, the low byte is the key texel (0x495B56) */
 } ome_mat_t;
 
 #define OME_MATR_MAX_BITMAPS 4

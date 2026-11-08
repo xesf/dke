@@ -92,8 +92,8 @@ address in a comment.
 
 ### 8. Renderer fidelity
 
-- Colour-key texels (face flag 0x200): 00495B56, 00496738, 004967B1, 00497188, 00497266. These faces now draw solid.
-- Near-plane clipping: 00498330, 0049A790. Triangles that cross the near plane are now dropped.
+- Done: colour-key texels. Material flag 0x200 (only P28 "CHEVEUX2" in the data) skips texels equal to the low flag byte (0x495B56).
+- Done: faces crossing the near plane are cut at cz = -32768 (0x49A790) in the in-game batch path, with shade and texel interpolated. The older single-model paths still drop them.
 - Matrix pose blend for CAN flag 0x800: 0041553F, 0041560C, 00492AC0 to 00492F30. The port lerps the angles instead.
 - Actor shadows in the game: 00417E40, 00418300, 00418470. Only the character screen has them now.
 - Per-axis model scale `sub_48FCD0` (entity +0x6C/+0x70/+0x74, 8.8 fixed point). First check whether any model uses

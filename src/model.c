@@ -573,6 +573,7 @@ static void fill_tri_shaded(const model_face_t *face, const mrw_vert_t *A,
                 if (tv >= rows) tv = rows - 1;
                 if (tv < 0) tv = 0;
                 colour = face->tex[tv * 256 + tu];
+                if (face->key_on && colour == face->key) continue;   /* 0x495B56 */
             } else {
                 colour = base;
             }
@@ -582,6 +583,39 @@ static void fill_tri_shaded(const model_face_t *face, const mrw_vert_t *A,
             plot_pixel(fb, fb_w, fb_h, x, y, 0, rgb, NULL, z_bmap);
         }
     }
+}
+
+/* Near plane (0x49A790 / 0x498330): a face with a corner in front of the plane
+ * and one behind is cut at cz = -32768 instead of being projected from clamped
+ * depths. Returns the clipped polygon (up to 4 corners) in camera space, with
+ * the shade row and texel (u, v) interpolated along the cut edges. */
+static i32 mrw_clip_near(const model_face_t *face, const mrw_vert_t *in[3],
+                         mrw_vert_t out[4], f64 ou[4], f64 ov[4], i32 gscale) {
+    const i64 NEAR_Z = -32768;
+    i32 n = 0;
+    for (i32 k = 0; k < 3; k++) {
+        const mrw_vert_t *a = in[k], *b = in[(k + 1) % 3];
+        f64 au = face->tex ? face->tu[k] : 0, av = face->tex ? face->tv[k] : 0;
+        f64 bu = face->tex ? face->tu[(k + 1) % 3] : 0, bv = face->tex ? face->tv[(k + 1) % 3] : 0;
+        if (a->vis) { out[n] = *a; ou[n] = au; ov[n] = av; n++; }
+        if (a->vis != b->vis) {
+            f64 t = (f64)(NEAR_Z - a->cz) / (f64)(b->cz - a->cz);
+            mrw_vert_t *o = &out[n];
+            o->cx = a->cx + (i64)((f64)(b->cx - a->cx) * t);
+            o->cy = a->cy + (i64)((f64)(b->cy - a->cy) * t);
+            o->cz = NEAR_Z - 1;
+            o->shade = (a->shade < 0 || b->shade < 0) ? -1 : (i32)(a->shade + (b->shade - a->shade) * t);
+            o->vis = 1;
+            ou[n] = au + (bu - au) * t;
+            ov[n] = av + (bv - av) * t;
+            i32 d = (i32)((-o->cz) >> 9); if (d < 1) d = 1;
+            f64 sc = ((f64)gscale / 16384.0) / (f64)d;
+            o->sx = g_model_cx + (i32)(o->cx * sc + (o->cx < 0 ? -0.5 : 0.5));
+            o->sy = g_model_cy - (i32)(o->cy * sc + (o->cy < 0 ? -0.5 : 0.5));
+            n++;
+        }
+    }
+    return n;
 }
 
 void model_render_world(const model_t *m,
@@ -793,6 +827,35 @@ void model_render_batch(const model_draw_t *items, i32 n_items, i32 gscale,
         i32 b = F[i].base;
         g_actor_z = F[i].z;
         const mrw_vert_t *va = &P[b + face->i0], *vb = &P[b + face->i1], *vc = &P[b + face->i2];
+        if (va->vis + vb->vis + vc->vis == 1 || va->vis + vb->vis + vc->vis == 2) {
+            /* Crosses the near plane: cut it, then draw the pieces. */
+            const mrw_vert_t *in[3] = { va, vb, vc };
+            mrw_vert_t cp[4];
+            f64 cu[4], cvv[4];
+            i32 nc = mrw_clip_near(face, in, cp, cu, cvv, gscale);
+            for (i32 k = 1; k + 1 < nc; k++) {
+                const mrw_vert_t *tri[3] = { &cp[0], &cp[k], &cp[k + 1] };
+                model_face_t ff = *face;
+                if (face->tex)
+                    for (i32 q = 0; q < 3; q++) {
+                        i32 idx = q == 0 ? 0 : k + q - 1;
+                        f64 uu = cu[idx], vv = cvv[idx];
+                        ff.tu[q] = (u8)((i32)uu & 0xFF);
+                        ff.tv[q] = (u16)(vv < 0 ? 0 : (i32)vv);
+                    }
+                i64 cross_z = (i64)(tri[1]->sx - tri[0]->sx) * (i64)(tri[2]->sy - tri[0]->sy)
+                            - (i64)(tri[1]->sy - tri[0]->sy) * (i64)(tri[2]->sx - tri[0]->sx);
+                if (pal && grd && (face->tex || face->ramp || face->mat_base) &&
+                    tri[0]->shade >= 0 && tri[1]->shade >= 0 && tri[2]->shade >= 0) {
+                    if (cross_z >= 0 && !face->two_sided) continue;
+                    fill_tri_shaded(&ff, tri[0], tri[1], tri[2], fb, fb_w, fb_h, z_bmap, pal, grd);
+                } else {
+                    mrw_draw_face(&ff, tri[0], tri[1], tri[2], fb, fb_w, fb_h, l_bmap, z_bmap,
+                                  pal, grd, Lx, Ly, Lz);
+                }
+            }
+            continue;
+        }
         if (pal && grd && (face->tex || face->ramp || face->mat_base) &&
             va->shade >= 0 && vb->shade >= 0 && vc->shade >= 0) {
             if (!va->vis && !vb->vis && !vc->vis) continue;
@@ -991,6 +1054,8 @@ const model_t *model_from_atm_atom(atm_atom_t *atom, const ome_matr_t *matr) {
                 i32 vb    = (mt->y + mt->h >= 256) ? 256 - mt->h : mt->y;
                 i32 shift = (mt->y + mt->h > 256) ? mt->y + mt->h - 256 : 0;
                 fc.tex = page;
+                fc.key_on = (mt->flags & 0x200) != 0;      /* 0x495C16 */
+                fc.key = (u8)(mt->flags & 0xFF);
                 fc.tex_rows = matr->bm_h[mt->bitmap];
                 const i32 *uv = f + ATM_FACE_UV;
                 i32 tu[4], tv[4];

@@ -37,6 +37,8 @@ typedef struct {
     const u8 *tex;
     i32       tex_rows;
     u8        ramp;      /* untextured: ramp base = nearest palette colour */
+    u8        key_on;    /* material flag 0x200: texels equal to key are skipped */
+    u8        key;
     u8        two_sided; /* ATM +0x38 bit 0x20 clear: never back-face culled */
     u8        tu[3];
     u16       tv[3];
