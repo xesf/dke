@@ -24,7 +24,7 @@
  *
  * Special personas with their own brains (NOT drafted, stubs below):
  *   id 0x5C (P92, flying imp)  sub_45FD40  (clips p92imp01/02, p92mar01, p92ata01)
- *   id 0x28 (P40, boss)        sub_460444  (+0xD70/+0xD74 phase, "p40gar02")
+ *   id 0x28 (P40, boss)        sub_460444  (+0xD70/+0xD74 phase, "p40gar02"): phase 2 = boss_guard_tick
  */
 
 #include <math.h>
@@ -619,6 +619,34 @@ static void imp_tick(entity_t *e) {
 /* ========================================================================
  * sub_4701E0 — per-frame combat brain for an NPC with +0xD60 set.
  * ======================================================================== */
+/* ========================================================================
+ * sub_460444 @ 0x460444 — P40 (persona 0x28) while +0xD70 == 2: it stands in
+ * "p40gar02" and only reacts to a landed player strike. State 1997 is its
+ * reaction (waits for the clip to end, then back to guard). Any other phase
+ * runs the common brain below, like the original's else branch.
+ * ======================================================================== */
+static void boss_guard_tick(entity_t *e) {
+    entity_t *p = g_player_entity;
+    if (E32(e, 0xD04) == 1997) {
+        if (actor_anim_done(e)) {
+            actor_play_anim(e, can_get_anim("p40gar02"), 1);
+            E32(e, 0xD08) = 0; E32(e, 0xD04) = 0;
+        }
+        return;
+    }
+    if (!st_attacking(p) || !in_hit_window(p) || !weapon_hits(p, e)) return;
+    i32 ps = E32(p, 0xD04);
+    if (ps == 60) {
+        actor_play_anim(e, can_get_anim("p40imp02"), 1);
+        E32(e, 0xD74) += 10000;                          /* the guard phase lasts longer */
+        E32(e, 0xD08) = 1997; E32(e, 0xD04) = 1997;
+    }
+    if (ps == 9 || ps == 12 || ps == 7 || ps == 10 || ps == 8 || ps == 11) {
+        actor_play_anim(e, can_get_anim("p40imp02"), 1);
+        E32(e, 0xD08) = 1997; E32(e, 0xD04) = 1997;
+    }
+}
+
 void combat_ai_tick(entity_t *e) {
     if (!e || !ROOT(e) || !EDESC(e) || !g_player_entity || !ROOT(g_player_entity)) return;
     u8 *d = EDESC(e);
@@ -626,7 +654,7 @@ void combat_ai_tick(entity_t *e) {
     /* debug_enabled: draw "NRJ : %d" (HP) at (0, 0x140). */
 
     if (E32(e, 0xB0) == 0x5C) { imp_tick(e); return; }          /* sub_45FD40: flying imp P92 */
-    if (E32(e, 0xB0) == 0x28) { /* sub_460444(e) P40 -- TODO */ return; }
+    if (E32(e, 0xB0) == 0x28 && E32(e, 0xD70) == 2) { boss_guard_tick(e); return; }   /* sub_460444, phase 2 */
 
     if (now - E32(e, 0xD34) > 250) {                          /* re-roll moods 4x/s */
         E32(e, 0xD34) = now;

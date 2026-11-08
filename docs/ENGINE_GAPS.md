@@ -63,11 +63,10 @@ address in a comment.
 
 ### 4. Combat effects
 
-- Enemy flame projectile: 00410E8A, 004119B7, 00411C27, 00411D09, 00411FE8. It flies, hits, makes sparks and a
-  154-particle burst, and does −100 HP. There is a TODO in `combat_damage.c`.
-- Blood spray 0042D03F: 32 particles on a hit. There is a TODO in `combat_damage.c`.
-- Screen-space sprite effects 004305EF: effect entity types 6 to 8. This probably covers the smoke sprites.
-- AI for the flying imp P92 (type 0x5C): 0046034D, 004603CB. There is a TODO in `combat_ai.c`.
+- Done: enemy flame projectile, blood spray, smoke puffs and the flying imp P92 (`combat_damage.c`, `fx.c`, `combat_ai.c`).
+- Done: P40 guard phase (+0xD70 == 2) of sub_460444 (`boss_guard_tick`). In other phases P40 now runs the common brain
+  (before, it did nothing at all).
+- Not done: the remaining part of sub_460444's else branch uses the same helpers as the common brain, so it needs no port.
 
 ### 5. Scripted fades and big animations
 
