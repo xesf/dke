@@ -94,8 +94,11 @@ address in a comment.
 
 - Done: colour-key texels. Material flag 0x200 (only P28 "CHEVEUX2" in the data) skips texels equal to the low flag byte (0x495B56).
 - Done: faces crossing the near plane are cut at cz = -32768 (0x49A790) in the in-game batch path, with shade and texel interpolated. The older single-model paths still drop them.
-- Matrix pose blend for CAN flag 0x800: 0041553F, 0041560C, 00492AC0 to 00492F30. The port lerps the angles instead.
-- Actor shadows in the game: 00417E40, 00418300, 00418470. Only the character screen has them now.
+- Matrix pose blend for CAN flag 0x800: 0041553F, 0041560C, 00492AC0 to 00492F30. The original turns the relative rotation by
+  a fraction of its axis-angle; the port lerps the angles instead. Small difference; port it only with a visual check.
+- Actor shadows in the game (`dword_4B7240` modes 1 to 4, `update_game_hud` 00466D4F): a render-to-texture silhouette
+  projected on the floor. 00417E40, 00418300, 00418470 are only the 2D polygon edge clipper it uses. The port has no shadows
+  at all (the earlier note about the character screen was wrong). This is the largest item left.
 - Per-axis model scale `sub_48FCD0` (entity +0x6C/+0x70/+0x74, 8.8 fixed point). First check whether any model uses
   a scale other than 256.
 - Alpha and shaded 2D blits: 004774BC, 0047776C, 00477BB0, 004781E4, 0047826B, 004782DC.
