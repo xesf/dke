@@ -56,7 +56,7 @@ address in a comment.
 ### 3. Level `.DAT` options and render modes
 
 - Done (`src/envfx.c`): flash 0042F565/0046BE40 and environment tint 0040C010, applied to the frame at blit time.
-- Not needed: coloured lights `ncolorlight` is 0 in every DAT that has the key (levels 2 and 13), so 0x4355E0 never runs.
+- Not needed: coloured lights `ncolorlight` is 0 in the only DAT that has the key (level 13), so 0x4355E0 never runs.
 - Still to parse in `scene_load_dat_config`: clipzperso/clipzvague/multiclip (levels 30, 38, 39). They only pick the low-detail
   render path for far actors, a speed trade, so they matter most for the planned GPU renderer.
 - Underwater mode (level 35): warp 0042FADF in `envfx.c` and bubbles 00430081 in `fx.c` are in. The bubble spawn period
