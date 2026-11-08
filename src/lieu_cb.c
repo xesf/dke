@@ -427,6 +427,12 @@ i32 g_combat_flags = 0;              /* debug_flags: COMBAT mode (bit 0 hold, bi
 extern i32 g_hero_autofight;         /* dword_4B219C (combat_ai.c) */
 extern i32 g_enemy_hits;             /* dword_506520 */
 static i32 g_game_exit_code = 0;     /* game_exit_code */
+extern i32  scene_score_get(void);
+extern void scene_score_set(i32 v);
+extern void scene_hud_refresh(void);
+/* End of game requested (op 27, ending movies): returns 1 once, then clears. */
+i32 lieu_game_exit_take(void);
+i32 lieu_game_exit_take(void) { i32 r = g_game_exit_code == 3; g_game_exit_code = 0; return r; }
 u8         g_movie_seen[8];          /* byte_507350: bit n = movie SCnn seen */
 
 /* slot 3 sub_444AC0 "Cinematique": QUEUES type 3, strcpy(node+0x30, name).
@@ -1065,8 +1071,8 @@ static i32 cb_divers(i32 op, i32 a, i32 b) {
         }
         if (b < 0) return *(i32 *)(EDESC(e) + 0x84);
         *(i32 *)(EDESC(e) + 0x84) = b;
-        /* TODO e == g_player_entity ? update_player_interface(ctx,1)
-         *                            : sub_45C700(e) HP bar */
+        if (e == g_player_entity) scene_hud_refresh();
+        else combat_enemy_bar(e);
         return 0;
 
     /* op 7 @ 0x4475A2 — inventory.
@@ -1248,10 +1254,9 @@ static i32 cb_divers(i32 op, i32 a, i32 b) {
     /* op 20 @ 0x447E58 — score_counter (HUD bar, 0..0x3FF). a<0 -> read,
      * else write + update_player_interface(ctx, 1). */
     case 20:
-        /* TODO score_counter lives in scene.c (g_score_counter, static) —
-         * export scene_score_get/set. */
-        if (a < 0) return 0 /* scene_score_get() */;
-        /* scene_score_set(a); update_player_interface(ctx, 1); */
+        if (a < 0) return scene_score_get();
+        scene_score_set(a);
+        scene_hud_refresh();
         return 0;
 
     /* op 21 @ 0x447E94 — cinematic_mode = a; debug_flags = b. */
@@ -1351,7 +1356,7 @@ static i32 cb_divers(i32 op, i32 a, i32 b) {
     /* op 27 @ 0x44844D — clear graphics_context, game_context,
      * render_buffer1; game_exit_code = 3 (end of game). */
     case 27:
-        /* TODO game_exit_code = 3 */
+        g_game_exit_code = 3;
         return 0;
 
     /* op 28 @ 0x44847D — positional sound at bone (b ? b : 0x11) of actor a:

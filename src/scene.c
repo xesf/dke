@@ -3046,6 +3046,7 @@ static void movie_over_card(void) {
     scene_free_bmap(&img);
 }
 
+extern i32 lieu_game_exit_take(void);
 i32 scene_render(system_t *sys) {
     envfx_tick(system_get_gametime());             /* 0x42F565 */
     if (!state) return 0;
@@ -3256,6 +3257,7 @@ i32 scene_render(system_t *sys) {
                 ls_play_movie(mv);
             }
         }
+        if (lieu_game_exit_take()) { print("scene: game ended -> menu\n"); return 1; }
     }
 
     /* --- Input: manual camera cycle ([ / ]) + Esc-to-menu -----------
