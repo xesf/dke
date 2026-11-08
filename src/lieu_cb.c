@@ -1883,7 +1883,7 @@ i32 lieu_action_dispatch(lieu_action_t *n, u32 now_ms) {
     }
 
     case LA_CHANGEPIECE:                       /* case 10 @ 0x44BA2C */
-        if (dlg_is_active()) return 0;
+        if (dlg_is_active() || cjr_active()) return 0;      /* !bonus_mode_active */
         g_next_entry = n->num5C;
         if (n->p58 == g_lieu_level) return 1;
         /* need_change_level_id; the next room starts on camera 0 in auto
@@ -1896,7 +1896,7 @@ i32 lieu_action_dispatch(lieu_action_t *n, u32 now_ms) {
         return 1;
 
     case LA_CHANGECAMERA:                      /* case 9 @ 0x44B949 */
-        if (dlg_is_active()) return 0;
+        if (dlg_is_active() || cjr_active()) return 0;      /* !bonus_mode_active */
         /* 0x44B96D: the locked camera (dword_506BD0 = script ST(0xF90))
          * only changes in mode 2; mode 1 hands the camera to sub_45A67C. */
         g_next_cam_mode = n->num5C;

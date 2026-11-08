@@ -3278,6 +3278,7 @@ i32 scene_render(system_t *sys) {
         model_default_pitch = scene_load_inf_pitch(g_scene_bg_level, g_scene_camera);
     }
     /* Esc (keyCode 53 → actions[27]) — request return to main menu */
+    if (sys->actions[27] == 1 && cjr_active()) sys->actions[27] = 0;   /* 0x407159: no menu during a big animation */
     if (sys->actions[27] == 1) {
         sys->actions[27] = 0;
         print("scene: ESC -> back to menu\n");

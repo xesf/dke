@@ -74,8 +74,8 @@ address in a comment.
 - LIEU op 42 fades and crossfades: `sub_42BE0E` with 0042BC7C, 0042BD44, 0042EA19, 0042EE82. There is a TODO in
   `lieu_cb.c`.
 - Done (`src/cjr.c`): the CJR big-animation player for LIEU op 17. CJR files are Autodesk FLC; only DELTA_FLC chunks occur.
-  Not done: blocking level exits and ESC while the animation runs (`bonus_mode_active` checks in 0044A58B, 00407159),
-  and the player/camera fall offset of sub_454690 for ANIM00 and ANIM02.
+  Room and camera changes (cases 9, 10) and ESC wait while it runs. The fall offset of sub_454690 is skipped: it writes through
+  `dword_4F91CC`, which nothing in the binary ever sets (null), so it looks dead.
 
 ### 6. Movies
 
