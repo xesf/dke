@@ -194,14 +194,14 @@ void ls_shut_movie(void) {
 
 static ls_movie_sbt_fn s_sbt_cb;
 static c8   s_sbt_lang[8];
-static i32  s_start_frame;
+static i32  s_fade_ms;                 /* the "_500" suffix: fade-out at the end */
 static void (*s_end_card)(void);
 
 void ls_set_movie_subtitles(ls_movie_sbt_fn cb, const c8 *lang) {
     s_sbt_cb = cb;
     snprintf(s_sbt_lang, sizeof(s_sbt_lang), "%s", lang ? lang : "US");
 }
-void ls_set_movie_start(i32 frame) { s_start_frame = frame > 0 ? frame : 0; }
+void ls_set_movie_fade(i32 ms) { s_fade_ms = ms > 0 ? ms : 0; }
 void ls_set_movie_end_card(void (*cb)(void)) { s_end_card = cb; }
 
 typedef struct { i32 start, end; c8 text[256]; } sbt_line_t;
@@ -338,9 +338,8 @@ static void play_movie_impl(const c8 *path) {
 
     static sbt_line_t sbt[SBT_MAX];
     i32 sbt_n = s_sbt_cb ? sbt_load(path, s_sbt_lang, sbt) : 0;
-    i32 first_frame = s_start_frame;
-    for (i32 k = 0; k < first_frame; k++)            /* start offset: decode, drop */
-        if (!crh_next_frame_ex(&r, rgb_buf, NULL)) { eof = true; break; }
+    const i32 first_frame = 0;
+    bool skipped = false;
 
     for (;;) {
         /* Keep the decoder MOVIE_LEAD frames ahead of the display. */
@@ -423,11 +422,37 @@ static void play_movie_impl(const c8 *path) {
                 sys->actions[27] = 0;
                 printf("ls_play_movie: skipped by ESC at frame %u/%u\n",
                        shown, (u32)r.frame_count);
+                skipped = true;
                 break;
             }
         }
     }
     for (i32 k = 0; k <= MOVIE_LEAD; k++) free(ring[k]);
+
+    /* 0x4330DD cp_play_fade: the last frame fades to black over the "_nnn" ms. */
+    if (s_fade_ms > 0 && !skipped && sys && !sys->quit && graphic && graphic->front_buffer) {
+        i32 n = graphic->width * graphic->height;
+        u32 *orig = (u32 *)malloc((size_t)n * sizeof(u32));
+        if (orig) {
+            memcpy(orig, graphic->front_buffer, (size_t)n * sizeof(u32));
+            u32 t_start = ls_tick();
+            for (;;) {
+                u32 el = ls_tick() - t_start;
+                u32 k = el >= (u32)s_fade_ms ? 0 : 256u - (el * 256u) / (u32)s_fade_ms;   /* 256 -> 0 */
+                u32 *d = graphic->front_buffer;
+                for (i32 i = 0; i < n; i++) {
+                    u32 p = orig[i];
+                    d[i] = 0xFF000000u | ((((p >> 16) & 0xFF) * k >> 8) << 16)
+                         | ((((p >> 8) & 0xFF) * k >> 8) << 8) | (((p & 0xFF) * k) >> 8);
+                }
+                ls_blit(sys, d);
+                ls_flip(sys);
+                ls_update_events(sys);
+                if (k == 0 || sys->quit) break;
+            }
+            free(orig);
+        }
+    }
 
     /* cine_clear_movie_background: zero front_buffer after playback */
     if (graphic && graphic->front_buffer) {
@@ -449,6 +474,6 @@ void ls_play_movie(const c8 *path) {
     if (s_end_card && !(state && state->system.quit)) s_end_card();   /* ls_play_movie's callback */
     gamma_bypass(0);
     s_sbt_cb = NULL;                       /* the options last for one movie */
-    s_start_frame = 0;
+    s_fade_ms = 0;
     s_end_card = NULL;
 }

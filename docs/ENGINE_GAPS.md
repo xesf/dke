@@ -79,10 +79,9 @@ address in a comment.
 
 ### 6. Movies
 
-- Done: subtitles (`DATAS>SBT>SC<nn>_<lang>.TXT`, drawn with the game font at y = 452), the `_nnn` start frame, and the OVER
+- Done: subtitles (`DATAS>SBT>SC<nn>_<lang>.TXT`, drawn with the game font at y = 452), the `_nnn` end fade (ms, 0x4330DD; it is not a start frame), and the OVER
   card after movies 16, 21, 22 and 23 (`movie.c`, `scene.c`). Not run against a real movie yet.
 - Colour correction (brightness, contrast, gamma tables): 00431D38, 004327B2, 00432A3B, 00432BE1, 00432D7D.
-- End fade 004330DD.
 
 ### 7. Objects across levels
 

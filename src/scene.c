@@ -3249,7 +3249,7 @@ i32 scene_render(system_t *sys) {
             else {                                                      /* sub_444BF7 */
                 music_stop(0);
                 ls_set_movie_subtitles(movie_subtitle, dlg_lang_code(state ? state->language_id : 0));
-                ls_set_movie_start(lieu_movie_start());
+                ls_set_movie_fade(lieu_movie_start());
                 i32 mnum = atoi(mv + 2);
                 if (mnum == 16 || mnum == 21 || mnum == 22 || mnum == 23)
                     ls_set_movie_end_card(movie_over_card);

@@ -1811,7 +1811,7 @@ static void cinema_play(const c8 *arg) {
     if (!(num == 2 && g_lieu_level == 7))          /* world_state == 7 */
         g_movie_seen[(num >> 3) & 7] |= (u8)(1u << (num & 7));
     /* subtitles "DATAS>SBT>SC%02d_%s.TXT"(num, language) ; file "SC>%s.CRH".
-     * `start` (the _500 suffix) goes to ls_play_movie as its 3rd argument. */
+     * `start` (the _500 suffix) is the fade-out in ms (ls_play_movie's 6th argument, 0x4330DD). */
     snprintf(g_lieu_movie, sizeof(g_lieu_movie), "%s.CRH", base);
     g_lieu_movie_pending = 1;
     /* Movies 16, 21, 22, 23 are endings: played with the skip callback
