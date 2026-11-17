@@ -21,6 +21,12 @@ Check the [TODO.md](TODO.md) for more comprehensive list of upcoming features an
 Place the contents of the game folder into the bin folder and run the executable.
 
 
+## Controls
+
+Arrow keys or WASD move, Shift runs, Space is the action key, `I` opens the inventory, `P` pauses, `C` draws or sheathes the weapon, 1 to 9 pick a hotkey item, Tab toggles the walk set, Esc returns to the menu, F2 and F3 (macOS) open the save and load screens.
+
+Attacks need the weapon drawn (`C`) and the attack key held. The attack key is Ctrl, or `X` on macOS, where Ctrl+arrows are taken by Mission Control. With the default scheme Attack+Up/Left/Right strikes forward/left/right and Attack+Down parries. With the alternate scheme (PERSOS menu) Attack alone turns to the nearest enemy and picks the move. On the Vita: L = Shift, R = Ctrl (attack), Circle = `C`, Triangle = inventory, Square = Tab, Cross = Space/Enter, Start = Esc, Select = pause.
+
 ## Compiling
 
 The project tries to be cross-platform with minimal dependencies to facilitate the compilation process on different platforms. Mac OS X and Windows are the main platforms we are targeting.

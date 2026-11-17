@@ -1356,6 +1356,7 @@ static void player_tick(void) {
     entity_t *p = g_player_entity;
     if (!p) return;
     combat_ai_cinematic();                                /* 0x466446 */
+    if (getenv("DKE_UNLOCK")) g_player_movement_locked = 0;
     if (E32(p, 0xCBC) != 0) { actor_walk_update(p); return; }
     if (!g_player_movement_locked) {
         /* sub_451BF9 / sub_4342C7. The headless autopilots (scene.c) drive

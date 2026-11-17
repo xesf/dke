@@ -163,6 +163,9 @@ static u8 *surface = NULL;
 static NSAutoreleasePool *pool = NULL;
 
 
+/* Ctrl+arrows are Mission Control / Spaces shortcuts on macOS and never reach
+ * the game, so X works as a second Ctrl (the attack key). */
+static int s_ctrl_flag, s_x_down;
 static void handle_events(system_t *system, i32 type, i32 key) {
     // Letters also set their VK code (actions['A'..'Z'], what process_input_command
     // tests); 'P' = actions[80] is the pause key and the cheat words typed on the
@@ -201,6 +204,11 @@ static void handle_events(system_t *system, i32 type, i32 key) {
         // e
         case 0x0E:
             system->actions[101] = type;
+            break;
+        // x: alias of Ctrl (attack)
+        case 0x07:
+            s_x_down = type;
+            system->actions[0x11] = (s_ctrl_flag || s_x_down) ? 1 : 0;
             break;
         // r
         case 0x0F:
@@ -372,7 +380,8 @@ static void handle_mouse_events(system_t *system, i32 type, i32 x, i32 y) {
 - (void)flagsChanged:(NSEvent *)event {
     NSEventModifierFlags f = [event modifierFlags];
     system->actions[0x10] = (f & NSEventModifierFlagShift) ? 1 : 0;
-    system->actions[0x11] = (f & NSEventModifierFlagControl) ? 1 : 0;
+    s_ctrl_flag = (f & NSEventModifierFlagControl) ? 1 : 0;
+    system->actions[0x11] = (s_ctrl_flag || s_x_down) ? 1 : 0;
     system->actions[0x12] = (f & NSEventModifierFlagOption) ? 1 : 0;
 }
 

@@ -104,11 +104,11 @@ void ls_update_events(system_t *system) {
     set_key(system, 40, (b & SCE_CTRL_DOWN)  || ly >  dead);
     set_key(system, 32, (b & SCE_CTRL_CROSS) != 0);
     set_key(system, 13, (b & SCE_CTRL_CROSS) != 0);
-    set_key(system, 113, (b & SCE_CTRL_SQUARE) != 0);       /* q */
-    set_key(system, 101, (b & SCE_CTRL_TRIANGLE) != 0);     /* e */
-    set_key(system, 0x43, (b & SCE_CTRL_CIRCLE) != 0);      /* C */
-    set_key(system, 9, (b & SCE_CTRL_LTRIGGER) != 0);       /* Tab */
-    set_key(system, 105, (b & SCE_CTRL_RTRIGGER) != 0);     /* i */
+    set_key(system, 9, (b & SCE_CTRL_SQUARE) != 0);         /* Tab: walk set */
+    set_key(system, 105, (b & SCE_CTRL_TRIANGLE) != 0);     /* i: inventory */
+    set_key(system, 0x43, (b & SCE_CTRL_CIRCLE) != 0);      /* C: draw / sheathe */
+    set_key(system, 0x10, (b & SCE_CTRL_LTRIGGER) != 0);    /* Shift: run, sidestep */
+    set_key(system, 0x11, (b & SCE_CTRL_RTRIGGER) != 0);    /* Ctrl: attack (+ D-pad) */
     set_key(system, 27, (b & SCE_CTRL_START) != 0);         /* Esc */
     set_key(system, 80, (b & SCE_CTRL_SELECT) != 0);        /* P */
 }

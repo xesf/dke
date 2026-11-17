@@ -115,8 +115,10 @@ void combat_keys_latch(const system_t *sys) {
     for (i32 i = 0; i < 256; i++) s_key[i] = sys ? (sys->actions[i] != 0) : 0;
     /* Headless: DKE_AUTOATTACK holds Ctrl+Up for 120 ms every 900 ms. */
     if (getenv("DKE_AUTOATTACK")) {
+        static i32 s_n = 0;                    /* draw the weapon ('C' pulses until in stance) */
+        if (++s_n >= 60 && g_player_entity && E32(g_player_entity, 0xD60) == 0 && (s_n & 7) < 3) s_key[0x43] = 1;
         i32 t = now_ms() % 900;
-        if (t < 120) { s_key[VK_CTRL_] = 1; s_key[VK_UP_] = 1; }
+        if (t < 600) { s_key[VK_CTRL_] = 1; if (!g_control_scheme) s_key[VK_UP_] = 1; }
     }
     /* WASD mirrors the arrows, like player_input_update does today. */
     if (sys) {
@@ -503,6 +505,7 @@ static i32 input_toggles(void) {
         if (E32(p, 0xCEC) == 0) E32(p, 0xCF0) = 1;       /* restart the idle */
         combat_hook_hud_refresh();
     }
+    if (getenv("DKE_AIDBG") && key_edge(VK_C_)) print("toggle C: d04=%d d60=%d\n", E32(p, 0xD04), E32(p, 0xD60));
     if (E32(p, 0xD04) == 0 && key_edge(VK_C_)) {         /* draw / sheathe */
         E32(p, 0xD60) ^= 1;
         g_stance_copy = E32(p, 0xD60);
@@ -585,6 +588,16 @@ void player_input_default(void) {
     if (!p || !EDESC(p) || DESC_HP(p) <= 0) return;
     combat_ctx_t c;
     ctx_init(&c);
+    if (getenv("DKE_AIDBG")) {
+        static i32 last = -1; static i32 n;
+        if (E32(p, 0xD04) != last || (E32(p, 0xD04) == 27 && ++n % 100 == 0))
+            print("pstate %d -> %d done=%d animst=%d hp=%d t=%d dur=%d\n", last, E32(p, 0xD04), actor_anim_done(p), E32(p, 0xD58),
+                  DESC_HP(p), actor_anim_time(p), ANIMREC(p) ? CAN_DURATION(ANIMREC(p)) : -1);
+        last = E32(p, 0xD04);
+    }
+    if (getenv("DKE_AIDBG") && key(VK_CTRL_))
+        print("pin: stance=%d d04=%d busy=%d ranged=%d cEC=%d d1=%d d2=%d\n", E32(p, 0xD60), E32(p, 0xD04),
+              E32(p, 0xCE8), c.ranged, E32(p, 0xCEC), c.d1, c.d2);
 
     /* Look at the nearest opponent (0x451C7C). Note it passes the slot
      * globals, not the filtered opponents. */
@@ -731,6 +744,9 @@ void player_input_alt(void) {
         E32(p, 0xCF4) == 0 && E32(p, 0xB0) >= 0 && E32(p, 0xB0) <= 3)
         E32(p, 0xD04) = 0x3E;
     if (!key(VK_CTRL_)) goto move;
+    if (getenv("DKE_AIDBG"))
+        print("pin-alt: stance=%d d04=%d tgt=%p td=%d C50=%d C5C=%d cEC=%d\n", E32(p, 0xD60), E32(p, 0xD04), (void *)tgt, td,
+              E32(p, 0xC50), E32(p, 0xC5C), E32(p, 0xCEC));
 
     if (tgt) face_half_always(tgt);
     if (key(VK_UP_))   { E32(p, 0xD14) = 0; E32(p, 0xCEC) = 1; return; }
