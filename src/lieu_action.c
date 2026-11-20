@@ -106,6 +106,17 @@ void lieu_action_reset(void) {
 i32 lieu_action_run_pile(void) { return g_run_pile; }
 i32 lieu_selected_pile(void)   { return g_sel_pile; }
 
+/* Debug: the head action of each pile, for stall reports. */
+void lieu_action_dump_heads(void) {
+    for (i32 p = 0; p < LA_PILE_COUNT; p++) {
+        if (g_count[p] <= 0) continue;
+        const lieu_action_t *n = &g_pile[p][0];
+        print("  pile %d (%s, %d queued): %s actor=%d name='%s' x=%d y=%d z=%d started=%u\n", p,
+              g_enable[p] ? "on" : "off", g_count[p], lieu_action_name(n->type), n->actor, n->name,
+              n->x, n->y, n->z, n->start_ms);
+    }
+}
+
 lieu_action_t *lieu_action_push(i32 type) {
     i32 p = g_sel_pile;
     if (p < 0 || p >= LA_PILE_COUNT) p = 0;

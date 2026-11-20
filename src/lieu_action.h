@@ -150,6 +150,7 @@ void lieu_action_run(u32 now_ms);
 
 /* Queue introspection (debug HUD / logging). */
 i32 lieu_action_pending(void);
+void lieu_action_dump_heads(void);   /* debug: head of each pile */
 i32 lieu_action_count(i32 pile);
 
 /*

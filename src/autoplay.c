@@ -18,6 +18,7 @@
  * Pair with DKE_FASTCLOCK=<ms> (virtual clock), DKE_NOAUDIO=1, DKE_NOMOVIE=1.
  */
 
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,6 +28,7 @@
 #include "entity.h"
 #include "state.h"
 #include "lieu_cb.h"
+#include "lieu_action.h"
 #include "dialogue.h"
 #include "cjr.h"
 #include "inventory.h"
@@ -44,7 +46,7 @@ extern i32 g_control_scheme;                 /* combat_player.c */
 #define ROOMS      100
 #define SEEN       12
 
-enum { PH_IDLE, PH_MOVE, PH_PRESS, PH_WAIT };
+enum { PH_IDLE, PH_WALK, PH_MOVE, PH_PRESS, PH_WAIT };
 
 static i32 s_on = -1;
 static i32 s_level = -1;
@@ -56,6 +58,7 @@ static i8  s_exit[ROOMS][ZONES];             /* target room, 0 = not an exit (kn
 static u8  s_exit_known[ROOMS][ZONES];
 static u8  s_room_zone[ROOMS][ZONES];        /* zone seen in that room */
 static i32 s_visits[ROOMS];
+static u8  s_unreach[ROOMS][ZONES];      /* walk gave up this epoch */
 static i32 s_last_room = -1, s_last_zone = -1;
 static u32 s_t_last_try;
 static u8  s_volatile[ST_SLOTS];
@@ -156,6 +159,7 @@ static i32 next_try(void) {
             if (!lieu_zone_get(z, &cx, &cz, &sx, &sz, &act)) continue;
             s_room_zone[r][z] = 1;
             if (s_exit_known[r][z] && s_exit[r][z]) continue;
+            if (s_unreach[r][z]) continue;
             i32 lo = pass == 0 ? 0 : HEADINGS, hi = pass == 0 ? HEADINGS : HEADINGS + s_nitems;
             for (i32 k = lo; k < hi; k++) {
                 if (s_tried[r][z][k]) continue;
@@ -177,7 +181,7 @@ static i32 pick_exit(void) {
     i32 r = s_level, best = -1, best_left = 0, best_vis = 1 << 30;
     for (i32 z = 1; z < ZONES; z++) {
         i32 cx, cz, sx, sz, act;
-        if (!s_exit_known[r][z] || !s_exit[r][z]) continue;
+        if (!s_exit_known[r][z] || !s_exit[r][z] || s_unreach[r][z]) continue;
         if (!lieu_zone_get(z, &cx, &cz, &sx, &sz, &act)) continue;
         i32 t = s_exit[r][z], left = room_left(t);
         if (left > best_left || (left == best_left && s_visits[t] < best_vis)) {
@@ -190,7 +194,103 @@ static i32 pick_exit(void) {
     return 1;
 }
 
+/* First zone containing (x,z), as lieu_detect_zone tests them. */
+static i32 zone_at(i32 x, i32 z) {
+    for (i32 i = 1; i < ZONES; i++) {
+        i32 cx, cz, sx, sz, act;
+        if (!lieu_zone_get(i, &cx, &cz, &sx, &sz, &act)) continue;
+        if (abs(x - cx) <= sx / 2 && abs(z - cz) <= sz / 2) return i;
+    }
+    return -1;
+}
+static i32 s_cur_zone = -1;
+
+/* ---- walking: BFS over the nav grid, steering with the arrow keys ---- */
+#define NG NAV_GRID_SIZE
+static i16 s_path[NG * NG][2];
+static i32 s_plen, s_pi;
+static i32 s_lastx, s_lastz;
+static u32 s_t_moved, s_t_walk;
+
+static i32 cell_of(i32 x, i32 z, i32 *cx, i32 *cz) {
+    if (g_nav.cell_width <= 0 || g_nav.cell_height <= 0) return 0;
+    *cx = (x - g_nav.world_x_origin) / g_nav.cell_width;
+    *cz = (z - g_nav.world_y_origin) / g_nav.cell_height;
+    return *cx >= 0 && *cx < NG && *cz >= 0 && *cz < NG;
+}
+static i32 s_avoid_target = -1;
+static i32 cell_free(i32 cx, i32 cz) {
+    if (!(cx >= 0 && cx < NG && cz >= 0 && cz < NG && g_nav.grid[cz * NG + cx] == NAV_FREE)) return 0;
+    /* Do not cross a known exit on the way to something else. */
+    i32 wx = g_nav.world_x_origin + cx * g_nav.cell_width + g_nav.cell_width / 2;
+    i32 wz = g_nav.world_y_origin + cz * g_nav.cell_height + g_nav.cell_height / 2;
+    i32 z = zone_at(wx, wz);
+    if (z > 0 && z != s_avoid_target && room_ok(s_level) && s_exit_known[s_level][z] && s_exit[s_level][z]) return 0;
+    return 1;
+}
+/* Path of cell centres from (px,pz) to the free cell nearest (tx,tz). */
+static i32 plan(i32 px, i32 pz, i32 tx, i32 tz) {
+    static i16 prev[NG * NG];
+    static i32 q[NG * NG];
+    i32 sx, sz, gx, gz;
+    s_plen = s_pi = 0;
+    if (!cell_of(px, pz, &sx, &sz) || !cell_of(tx, tz, &gx, &gz)) return 0;
+    for (i32 i = 0; i < NG * NG; i++) prev[i] = -2;
+    i32 head = 0, tail = 0, best = sz * NG + sx, bestd = 1 << 30;
+    prev[best] = -1;
+    q[tail++] = best;
+    while (head < tail) {
+        i32 c = q[head++], cx = c % NG, cz = c / NG;
+        i32 d = (cx - gx) * (cx - gx) + (cz - gz) * (cz - gz);
+        if (d < bestd) { bestd = d; best = c; }
+        if (!d) break;
+        static const i32 dx[8] = { 1, -1, 0, 0, 1, 1, -1, -1 }, dz[8] = { 0, 0, 1, -1, 1, -1, 1, -1 };
+        for (i32 k = 0; k < 8; k++) {
+            i32 nx = cx + dx[k], nz = cz + dz[k];
+            if (!cell_free(nx, nz) || prev[nz * NG + nx] != -2) continue;
+            if (k >= 4 && (!cell_free(cx + dx[k], cz) || !cell_free(cx, cz + dz[k]))) continue;
+            prev[nz * NG + nx] = (i16)c;
+            q[tail++] = nz * NG + nx;
+        }
+    }
+    i32 n = 0;
+    for (i32 c = best; c >= 0 && n < NG * NG; c = prev[c]) n++;
+    s_plen = n;
+    i32 i = n - 1;
+    for (i32 c = best; c >= 0 && i >= 0; c = prev[c], i--) {
+        s_path[i][0] = (i16)(c % NG);
+        s_path[i][1] = (i16)(c / NG);
+    }
+    s_pi = 1;                                    /* [0] is the start cell */
+    return 1;
+}
+
+/* One frame of walking toward (tx,tz): 1 arrived, -1 gave up, 0 walking. */
+static i32 walk(system_t *sys, entity_t *p, i32 tx, i32 tz, i32 hx, i32 hz, u32 t) {
+    i32 x = EROOT(p)->pos[0], z = EROOT(p)->pos[2];
+    if (abs(x - tx) <= hx && abs(z - tz) <= hz) return 1;
+    if (abs(x - s_lastx) + abs(z - s_lastz) > 150) { s_lastx = x; s_lastz = z; s_t_moved = t; }
+    if (t - s_t_moved > 2500 || t - s_t_walk > 40000) return -1;
+    i32 wx = tx, wz = tz;
+    while (s_pi < s_plen) {
+        wx = g_nav.world_x_origin + s_path[s_pi][0] * g_nav.cell_width + g_nav.cell_width / 2;
+        wz = g_nav.world_y_origin + s_path[s_pi][1] * g_nav.cell_height + g_nav.cell_height / 2;
+        if (abs(x - wx) < g_nav.cell_width * 2 / 3 && abs(z - wz) < g_nav.cell_height * 2 / 3) { s_pi++; continue; }
+        break;
+    }
+    if (s_pi >= s_plen) { wx = tx; wz = tz; }
+    f64 dx = (f64)(wx - x), dz = (f64)(wz - z);
+    i32 want = (i32)(-atan2(dx, dz) * 65536.0 / (2.0 * 3.14159265358979)) & 0xFFFF;
+    i32 d = (want - (EROOT(p)->rot[2] & 0xFFFF)) & 0xFFFF;
+    if (d > 0x8000) d -= 0x10000;
+    if (abs(d) > 0x1800) EROOT(p)->rot[2] = want;  /* big turns: face at once, keys are slow */
+    else if (abs(d) > 0x400) sys->actions[d > 0 ? 39 : 37] = 1;
+    sys->actions[38] = 1;                        /* Up: walk */
+    return 0;
+}
+
 static void reopen_all(void) {
+    memset(s_unreach, 0, sizeof(s_unreach));
     memset(s_tried, 0, sizeof(s_tried));
     s_stuck_logged = 0;
 }
@@ -204,13 +304,14 @@ void autoplay_tick(system_t *sys) {
     sys->actions[32] = 0;
     sys->actions[0x11] = 0;
     sys->actions[0x43] = 0;
+    sys->actions[37] = sys->actions[38] = sys->actions[39] = sys->actions[40] = 0;
 
     if (state->current_level_id != s_level) {
         i32 to = state->current_level_id;
         /* A room change within 3 s of standing in a zone: that zone is an exit. */
-        if (room_ok(s_last_room) && s_last_zone > 0 && t - s_t_last_try < 3000) {
-            s_exit_known[s_last_room][s_last_zone] = 1;
-            s_exit[s_last_room][s_last_zone] = (i8)to;
+        if (room_ok(s_last_room) && s_cur_zone > 0) {
+            s_exit_known[s_last_room][s_cur_zone] = 1;
+            s_exit[s_last_room][s_cur_zone] = (i8)to;
         }
         print("auto: entered level %d from %d (progress so far %d)\n", to, s_level, s_progress_total);
         s_level = to;
@@ -220,8 +321,15 @@ void autoplay_tick(system_t *sys) {
         s_phase = PH_IDLE;
         s_t_phase = s_t_enter = t;
         s_last_zone = -1;
+        s_cur_zone = -1;
     }
     if (!room_ok(s_level)) return;
+    s_last_room = s_level;
+    {
+        i32 z = zone_at(EROOT(p)->pos[0], EROOT(p)->pos[2]);
+        if (z > 0) s_cur_zone = z;
+        else if (!lieu_player_blocked()) s_cur_zone = -1;      /* keep it through the exit script */
+    }
 
     if (!getenv("DKE_AUTOPLAY_MORTAL") && *(i32 *)(EDESC(p) + 0x84) < 400)
         *(i32 *)(EDESC(p) + 0x84) = 1000;
@@ -236,6 +344,13 @@ void autoplay_tick(system_t *sys) {
     if (dlg_is_active() || cjr_active() || g_player_movement_locked || lieu_player_blocked()) {
         if (!s_t_busy) s_t_busy = t;
         if (t - s_t_busy > 20000 && ((t / 500) & 1)) sys->actions[32] = 1;
+        static u32 s_t_report;
+        if (t - s_t_busy > 30000 && t - s_t_report > 30000) {
+            s_t_report = t;
+            print("auto: WAITING %us in level %d: dlg=%d cjr=%d locked=%d blocked=%d\n", (t - s_t_busy) / 1000, s_level,
+                  dlg_is_active(), cjr_active(), g_player_movement_locked, lieu_player_blocked());
+            lieu_action_dump_heads();
+        }
         s_t_phase = t;
         return;
     }
@@ -254,16 +369,43 @@ void autoplay_tick(system_t *sys) {
             }
             return;
         }
-        {
+        if (getenv("DKE_AUTOPLAY_TELEPORT")) {
             i32 cx, cz, sx, sz, act;
             lieu_zone_get(s_zone, &cx, &cz, &sx, &sz, &act);
             teleport(p, cx, cz, s_head * (0x10000 / HEADINGS));
+            s_last_room = s_level; s_last_zone = s_zone; s_t_last_try = t;
+            snap(s_snap);
+            s_phase = PH_MOVE;
+        } else {
+            i32 cx, cz, sx, sz, act;
+            lieu_zone_get(s_zone, &cx, &cz, &sx, &sz, &act);
+            s_avoid_target = s_zone;
+            plan(EROOT(p)->pos[0], EROOT(p)->pos[2], cx, cz);
+            s_lastx = EROOT(p)->pos[0]; s_lastz = EROOT(p)->pos[2];
+            s_t_moved = s_t_walk = t;
+            s_last_room = s_level; s_last_zone = s_zone; s_t_last_try = t;
+            s_phase = PH_WALK;
         }
-        s_last_room = s_level; s_last_zone = s_zone; s_t_last_try = t;
-        snap(s_snap);
-        s_phase = PH_MOVE;
         s_t_phase = t;
         return;
+    case PH_WALK: {
+        i32 cx, cz, sx, sz, act;
+        if (!lieu_zone_get(s_zone, &cx, &cz, &sx, &sz, &act)) { s_phase = PH_IDLE; return; }
+        s_t_last_try = t;
+        i32 hx = sx / 2 > 300 ? sx / 2 - 200 : sx / 2, hz = sz / 2 > 300 ? sz / 2 - 200 : sz / 2;
+        i32 r = walk(sys, p, cx, cz, hx, hz, t);
+        if (r < 0) {
+            s_unreach[s_level][s_zone] = 1;
+            print("auto: L%d zone %d unreachable from (%d,%d)\n", s_level, s_zone, EROOT(p)->pos[0], EROOT(p)->pos[2]);
+            s_phase = PH_IDLE;
+        } else if (r > 0) {
+            EROOT(p)->rot[2] = s_head * (0x10000 / HEADINGS);
+            snap(s_snap);
+            s_phase = PH_MOVE;
+            s_t_phase = t;
+        }
+        return;
+    }
     case PH_MOVE:
         if (t - s_t_phase < 400) return;
         if (s_is_exit) {                         /* stand in the exit and wait */
