@@ -1,3 +1,4 @@
+#include "../vclock.h"
 #include "gamma.h"
 #include "envfx.h"
 #include <Cocoa/Cocoa.h>
@@ -559,6 +560,7 @@ static void tick_timebase_init(void) {
 }
 
 inline u32 ls_tick() {
+    if (vclock_active()) return vclock_tick();
     pthread_once(&tick_timebase_once, tick_timebase_init);
     if (!tick_timebase_valid) return 0;
 
@@ -569,6 +571,7 @@ inline u32 ls_tick() {
 }
 
 inline void ls_delay(u32 delay) {
+    if (vclock_active()) { vclock_advance(delay); return; }
     [NSThread sleepForTimeInterval:delay / 1000.0];
 }
 

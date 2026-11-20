@@ -63,6 +63,7 @@
 #include "state.h"
 #include "scene.h"
 #include "menu/screens.h"
+#include "autoplay.h"
 #include "actor.h"
 #include "game_init.h"
 #include "world.h"
@@ -3096,6 +3097,7 @@ i32 scene_render(system_t *sys) {
     if (g_proj_cam != g_scene_camera && g_scene_bg_level >= 0)
         scene_load_camera_anchor(g_scene_bg_level, g_scene_camera);
     g_player_movement_locked = lieu_player_blocked();
+    autoplay_tick(sys);                            /* DKE_AUTOPLAY bot (not in the original) */
     {
         i32 action = sys ? sys->actions[32] : 0;
         if (getenv("DKE_AUTOACTION")) {          /* headless: hold Space N ms (default 300) every N+2000 ms */

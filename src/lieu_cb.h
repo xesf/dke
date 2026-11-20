@@ -175,6 +175,8 @@ const c8 *lieu_divers_text(void);
 /* Per-frame zone lookup (op-3 source). Returns a zone/trigger id, or -1
  * for none. Stub returns -1 until player transform + zone geometry exist. */
 i32 lieu_detect_zone(void);
+/* Autoplay: zone i (1..40); 0 empty, 1 static, 2 follows an actor. */
+i32 lieu_zone_get(i32 i, i32 *cx, i32 *cz, i32 *sx, i32 *sz, i32 *active);
 
 /* Cutscene queued by cb_cinematique. Returns the "SCnn.CRH" path to play
  * (once), or NULL. Drained by scene_render (safe render context). */

@@ -49,6 +49,7 @@ typedef struct {
     c8  hotkeys[9][8];                      /* byte_4B33F8 */
 } inv_save_t;
 void inv_new_game(void);
+i32  inv_list(c8 (*out)[8], i32 max);   /* held item names (autoplay) */
 /* consume_action_resource: weapon charge -= cost; 1 = empty. */
 i32  inv_wear(const c8 *name, i32 cost);
 /* execute_counter_attack, inventory part: the held weapon breaks ('Q'). */

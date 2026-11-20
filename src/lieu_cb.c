@@ -2513,6 +2513,22 @@ void lieu_enter(i32 level_id) {
  *   2. load L01 zone rectangles (LCOD table),
  *   3. point-in-zone test -> zone id.
  */
+/* Zone i for the autoplay bot: centre (an attached actor's position),
+ * extent and active flag. 0 when the slot is empty. */
+i32 lieu_zone_get(i32 i, i32 *cx, i32 *cz, i32 *sx, i32 *sz, i32 *active) {
+    if (i < 1 || i >= LIEU_ZONE_COUNT) return 0;
+    zone_t *zn = &g_zones[i];
+    if (zn->center_x == -1 && !zn->entity) return 0;
+    i32 x = zn->center_x, z = zn->center_z;
+    if (zn->entity) {
+        entity_t *e = (entity_t *)zn->entity;
+        if (e == g_player_entity || !EROOT(e)) return 0;
+        x = EROOT(e)->pos[0]; z = EROOT(e)->pos[2];
+    }
+    *cx = x; *cz = z; *sx = zn->size_x; *sz = zn->size_z; *active = zn->active;
+    return zn->entity ? 2 : 1;
+}
+
 i32 lieu_detect_zone(void) {                              /* sub_449E03 */
     i32 px, pz;
     if (!player_get_pos(&px, NULL, &pz)) return -1;

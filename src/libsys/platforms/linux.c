@@ -1,3 +1,4 @@
+#include "../vclock.h"
 #include "gamma.h"
 #include "envfx.h"
 #include <X11/Xlib.h>
@@ -72,12 +73,14 @@ void ls_update_events(system_t *system) {
 }
 
 u32 ls_tick(void) {
+    if (vclock_active()) return vclock_tick();
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return (u32)(ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
 }
 
 void ls_delay(u32 ms) {
+    if (vclock_active()) { vclock_advance(ms); return; }
     struct timespec ts;
     ts.tv_sec  = (time_t)(ms / 1000);
     ts.tv_nsec = (long)((ms % 1000) * 1000000);

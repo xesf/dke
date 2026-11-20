@@ -540,6 +540,14 @@ void inv_weapon_break(c8 *name) {
     inv_set_equipped(name, 1);
 }
 
+/* Names of the items held (autoplay). Returns the count written. */
+i32 inv_list(c8 (*out)[8], i32 max) {
+    i32 n = 0;
+    for (i32 i = INV_SLOTS - 1; i >= 0 && n < max; i--)
+        if (g_inv[i].name[0] && g_inv[i].qty > 0) { memcpy(out[n], g_inv[i].name, 8); out[n][7] = 0; n++; }
+    return n;
+}
+
 /* sub_43A63D: a new game empties the inventory, its saved copy and the
  * hot keys. */
 void inv_new_game(void) {

@@ -5,6 +5,7 @@
 #include "libsys/common.h"
 #include "libsys/memory.h"
 #include "libsys/system.h"
+#include "libsys/vclock.h"
 #include "libsys/file_system.h"
 #include "libsys/graphics/graphic.h"
 #include "libsys/graphics/shading.h"
@@ -325,6 +326,7 @@ i32 ls_main(system_t *system, c8 **argv) {
             print("main: DKE_FRAMES=%d reached — exiting\n", dbg_maxframes);
             break;
         }
+        if (vclock_active()) vclock_advance(vclock_frame_ms());   /* DKE_FASTCLOCK */
         system->timer.tick = ls_tick();
         ls_update_events(system);
 
