@@ -49,6 +49,8 @@ typedef struct {
     c8  hotkeys[9][8];                      /* byte_4B33F8 */
 } inv_save_t;
 void inv_new_game(void);
+/* sub_475990: take one ammo for a shot with this weapon; 0 = none. */
+i32  inv_take_ammo(const c8 *weapon);
 void inv_save_state(inv_save_t *s);
 void inv_load_state(const inv_save_t *s);
 

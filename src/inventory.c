@@ -488,6 +488,31 @@ static void inv_unpack(inv_entry_t *t, const u8 *in) {
         memcpy(&t[i].pending, q + 0x18, 4);
     }
 }
+/*
+ * sub_475990(weapon name): a shot needs ammo. The ammo is the weapon's
+ * linked object (OBJETS "linke"); a weapon linked to itself (thrown) must
+ * keep one in the inventory. Takes one ammo (and one OB08 for weapon 55)
+ * and returns 1, or 0 when there is none.
+ */
+i32 inv_take_ammo(const c8 *weapon) {
+    i32 id = inv_name_id(weapon);
+    const obj_record_t *r = id ? obj_rec(id) : NULL;
+    if (!r || !inv_find(weapon)) return 0;
+    c8 ammo[16], ob08[16];
+    snprintf(ammo, sizeof(ammo), "OB%02d", r->linke);
+    i32 keep = r->linke == id;
+    inv_entry_t *e = inv_find(ammo);
+    if (!e || e->qty <= keep) return 0;
+    if (id == 55) {
+        inv_entry_t *o = inv_find("OB08");
+        if (!o || o->qty <= 0) return 0;
+        snprintf(ob08, sizeof(ob08), "OB08");
+        inv_remove_one(ob08);
+    }
+    inv_remove_one(ammo);
+    return 1;
+}
+
 /* sub_43A63D: a new game empties the inventory, its saved copy and the
  * hot keys. */
 void inv_new_game(void) {

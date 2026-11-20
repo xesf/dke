@@ -51,6 +51,7 @@
 #include "effect.h"
 #include "fx.h"
 #include "combat.h"
+#include "inventory.h"
 
 void combat_enemy_bar(entity_t *e);
 
@@ -710,12 +711,53 @@ static i32 in_cone(const i32 *from, const i32 *to, const i32 *dir, f64 range) {
     f64 cross = fabs((f64)dir[2] * dx - (f64)dir[0] * dz) / 268435456.0;
     return cross / dot < ratio;
 }
-/* get_distance_between_points @ 0x410490: length of the shot ray until the
- * first "col" wall (dword_4F5FB0). Returns 0 when no ray. TODO port. */
-static i32 shot_ray(entity_t *a, const i32 *dir, f64 *len) { (void)a; (void)dir; *len = 1e9; return 1; }
+/* get_distance_between_points @ 0x410490: length of the shot ray from the
+ * gravit along the body heading until the first wall: an edge of the
+ * walkable boundary (world_controller) or of a solid "col" obstacle
+ * (dword_4F5FB0, flag 1 set and 2 clear). 0 when no wall is ahead. */
+static void ray_poly(const sol_limit_t *s, const i32 *o, f64 sv, f64 cv, f64 *best, i32 *found) {
+    const u8 *b = (const u8 *)s;
+    i32 n = *(const i32 *)(b + 0x1D8);
+    for (i32 i = 0; i < n; i++) {
+        const i32 *p = (const i32 *)(b + 0x14 + i * 12);
+        const i32 *q = (const i32 *)(b + 0x14 + (i == n - 1 ? 0 : i + 1) * 12);
+        f64 c1 = cv * (f64)(p[0] - o[0]) - sv * (f64)(p[2] - o[2]);
+        f64 c2 = cv * (f64)(q[0] - o[0]) - sv * (f64)(q[2] - o[2]);
+        if (!((c1 <= 0.0 && c2 >= 0.0) || (c1 >= 0.0 && c2 <= 0.0))) continue;
+        f64 ex = (f64)(q[0] - p[0]), ez = (f64)(p[2] - q[2]);
+        f64 t = ((f64)(p[2] - o[2]) * ex + (f64)(p[0] - o[0]) * ez) / (cv * ex + sv * ez);
+        if (!(t > 0.0)) continue;                      /* 0x410707 */
+        if (!*found || t < *best) { *best = t; *found = 1; }
+    }
+}
+static i32 shot_ray(entity_t *a, const i32 *dir, f64 *len) {
+    (void)dir;
+    obc_node_t *g = EROOT(a);
+    if (!g) return 0;
+    i32 ang;
+    if (ANIM(a) && (CAN_FLAGS(ANIM(a)) & 1) && g->child)
+        ang = (g->rot[2] - (g->child->rot[0] - CAN_ROOT_YAW(ANIM(a)))) & 0xFFFF;
+    else
+        ang = g->rot[2] & 0xFFFF;
+    ang += 0x4000;
+    f64 sv = cosine_table[(((u32)ang + 8u) >> 4) & 0xFFF];
+    f64 cv = cosine_table[(((u32)ang - 0x3FF8u) >> 4) & 0xFFF];
+    f64 best = 0.0;
+    i32 found = 0;
+    if (g_world.world_controller) ray_poly(g_world.world_controller, g->pos, sv, cv, &best, &found);
+    for (i32 i = 0; i < g_world.num_collisions; i++) {
+        const sol_limit_t *c = g_world.collision_zones[i];
+        if (!c) continue;
+        u8 f = *(const u8 *)c;
+        if ((f & 1) && !(f & 2)) ray_poly(c, g->pos, sv, cv, &best, &found);
+    }
+    if (!found) return 0;
+    *len = best;
+    return 1;
+}
 /* sub_475990 @ 0x475990: ammo "OB%02d" (byte_4DB863[weapon]) qty > 0 ->
- * consume one; weapon 55 also needs OB08. TODO port (inventory). */
-static i32 shot_ammo(entity_t *a) { (void)a; return 1; }
+ * consume one; weapon 55 also needs OB08 (inventory.c). */
+static i32 shot_ammo(entity_t *a) { return inv_take_ammo(ESTR(a, 0xD2)); }
 
 static i32 shoot(entity_t *a, entity_t *t1, entity_t *t2) {
     if (a == g_player_entity && !shot_ammo(a)) return 0;   /* (key 0x12 bypasses the check) */
@@ -1050,8 +1092,8 @@ i32  combat_hook_entity_damage(entity_t *atk, entity_t *vic) { (void)vic; return
 void combat_hook_blood(entity_t *vic) { if (g_blood && !(g_debug_flags & 2)) blood_burst(vic); }
 i32  combat_hook_check_revival(entity_t *vic) { return cramped(vic); }               /* check_entity_revival */
 i32  combat_hook_contact(entity_t *atk, entity_t *vic) { return strike_hits(atk, vic); } /* sub_429695 */
-i32  combat_hook_has_ammo(const c8 *w)     { (void)w; return 1; }                     /* TODO sub_475990 */
-i32  combat_hook_ray_dist(entity_t *a, f64 *out) { (void)a; *out = 1e9; return 1; }   /* TODO wall ray */
+i32  combat_hook_has_ammo(const c8 *w)     { return inv_take_ammo(w); }               /* sub_475990 */
+i32  combat_hook_ray_dist(entity_t *a, f64 *out) { return shot_ray(a, NULL, out); }  /* get_distance_between_points */
 i32  combat_hook_in_cone(const i32 *t, const i32 *f, const i32 *d, f64 r) { return in_cone(f, t, d, r); }
 i32  combat_hook_head_track(entity_t *s, entity_t *t) { return actor_head_track(s, t); }
 void combat_hook_objects_flagbits(game_object_t *o) { (void)o; }                      /* sub_4728DF */
