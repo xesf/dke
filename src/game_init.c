@@ -1737,6 +1737,8 @@ const creature_entry_t *game_init_get_creature(i32 id) {
     return &g_creature_table[id];
 }
 
+u8 *game_init_ability_bytes(void) { return g_misc_4DCCC0; }   /* byte_4DCCC0, 0xD2 */
+
 u8 game_init_get_ability(i32 creature_id, i32 slot) {
     /* byte_4DCCC0 @ 0x4DCCC0 — per-creature per-slot ability flags.
      * Layout: 6 bytes per creature, indexed as [slot + creature_id * 6]. */

@@ -963,6 +963,7 @@ static i32 lo_zone_at(i32 x, i32 z) {
  * generously; check the binary's extent before relying on it. */
 #define LO_TAB509B40_ROWS 0x80
 static i16 g_tab_509B40[LO_TAB509B40_ROWS * 8];
+i16 *lieu_tab509b40(void) { return g_tab_509B40; }
 
 static i32 g_dword_505D70 = 0;   /* op 18: hit-reaction delay by weapon   */
 static i32 g_dword_4B2B98 = 0;   /* op 15                                 */
@@ -2370,6 +2371,9 @@ static void lieu_run_init(void) {
 /* sub_43A63D @ 0x43A79B: a new game clears the script variables. */
 void lieu_new_game(void) {
     memset(g_lieu_state, 0, sizeof(g_lieu_state));
+    memset(g_tab_509B40, 0, sizeof(g_tab_509B40));     /* memset(word_509B40, 0, 0x620) @ 0x425D50 */
+    inv_new_game();
+    scene_score_set(0);                                 /* score_counter = 0 */
     /* L01 trig00's entry phase: 1 = the opening of a new game (L01 INIT
      * clears it, so later visits take the persisted path). */
     LIEU_ST(g_lieu_state, ST_START_POINT(1)) = 1;

@@ -36,6 +36,22 @@ i32  etat_objet_item(etat_item_t *a, i32 had_s_prefix);
 void inv_use_by_name(const c8 *name, i32 add);
 /* Hotkey slot k (0..8) -> stored item name ("" when free). */
 const c8 *inv_hotkey(i32 k);
+/* Save game blocks, in the exe's layout (see files.c). */
+#define INV_SAVE_TABLE 0xEC4                /* 135 entries x 0x1C */
+typedef struct {
+    i32 count;                              /* dword_4B3440 */
+    u8  table[INV_SAVE_TABLE];              /* byte_4B3448 */
+    i32 saved_count;                        /* dword_509B34 */
+    u8  saved[INV_SAVE_TABLE];              /* byte_50A160 */
+    i32 category;                           /* dword_4B3444 */
+    i16 res[35][10];                        /* resource_table (0x2BC) */
+    i16 res_init[35][10];                   /* word_4DC020 (0x2BC) */
+    c8  hotkeys[9][8];                      /* byte_4B33F8 */
+} inv_save_t;
+void inv_new_game(void);
+void inv_save_state(inv_save_t *s);
+void inv_load_state(const inv_save_t *s);
+
 /* DIVERS op 5: weapon charge in percent (b == -1 reads, else sets). */
 i32  inv_resource_pct(const c8 *name, i32 b);
 /* sub_426A24: take one away (name = object name, letter at [4]). */

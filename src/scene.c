@@ -3144,6 +3144,10 @@ i32 scene_render(system_t *sys) {
             else { inv_use_by_name(nm, 0); inv_sort(); }
         }
     }
+    if (getenv("DKE_SAVETEST")) {
+        static i32 n; extern void files_selftest(void);
+        if (++n == atoi(getenv("DKE_SAVETEST"))) files_selftest();
+    }
     combat_keys_latch(sys);                        /* process_input_command / _event */
     {
         /* Headless: DKE_FIGHT=<persona hex>[:<frame>] starts a fight. */

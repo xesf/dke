@@ -59,7 +59,10 @@
 #include "libsys/graphics/graphic.h"
 #include "libsys/audio/wav.h"
 
-extern i32 g_combat_flags;          /* debug_flags (combat_ai.c) */
+extern i32 g_combat_flags;
+extern i32  scene_score_get(void);
+extern void scene_score_set(i32 v);
+extern void scene_hud_refresh(void);          /* debug_flags (combat_ai.c) */
 
 #define THUMB_W   0x152             /* 338 */
 #define THUMB_H   0x10A             /* 266 */
@@ -390,25 +393,31 @@ static b8 game_save(i32 slot) {
     save_actor(f, g_secondary_companion_entity);
     wz(f, lieu_state_slot(0), 0xFA0);              /* dword_505C40 */
     wz(f, NULL, 0x300);                            /* palette_data */
-    /* Inventory: no accessor yet (TODO hook inventory_save_state). */
-    put32(f, 0); wz(f, NULL, INV_BYTES);
-    put32(f, 0); wz(f, NULL, INV_BYTES);
-    put32(f, 0); put32(f, 0);
-    wz(f, NULL, 0x5C4);
-    wz(f, NULL, 0x80 + 0x9D8 + 0x9D8 + 0xD2 + 0x2BC + 0x2BC + 0x860);
+    inv_save_t *iv = (inv_save_t *)calloc(1, sizeof(inv_save_t));
+    if (iv) inv_save_state(iv);
+    put32(f, iv ? iv->count : 0);         wz(f, iv ? iv->table : NULL, INV_BYTES);   /* 4B3440, 4B3448 */
+    put32(f, iv ? iv->saved_count : 0);   wz(f, iv ? iv->saved : NULL, INV_BYTES);   /* 509B34, 50A160 */
+    put32(f, 0);                                                                     /* dword_4B430C */
+    put32(f, iv ? iv->category : 0);                                                 /* dword_4B3444 */
+    wz(f, NULL, 0x5C4);                                                              /* dword_506C80 */
+    wz(f, NULL, 0x80 + 0x9D8 + 0x9D8);                                               /* 4DE3C0, 4DCDA0, 4DC2E0 */
+    wz(f, game_init_ability_bytes(), 0xD2);                                          /* byte_4DCCC0 */
+    wz(f, iv ? (const void *)iv->res : NULL, 0x2BC);                                 /* resource_table */
+    wz(f, iv ? (const void *)iv->res_init : NULL, 0x2BC);                            /* word_4DC020 */
+    wz(f, NULL, 0x860);                                                              /* unk_4DAB60 */
     /* unk_4DAB60 written as zeros: no 2 x 0xC records follow. */
     wz(f, NULL, 6 * 4);
     put32(f, g_player_movement_locked);
     put32(f, 0);                                   /* dword_4FF0A0 */
     put32(f, g_special_mode_active);
-    put32(f, 0); put32(f, 0); put32(f, 0);         /* score, 4FF098, 4B2AB4 */
+    put32(f, scene_score_get()); put32(f, 0); put32(f, 0);   /* score, 4FF098, 4B2AB4 */
     wz(f, NULL, 0xE);
     wz(f, NULL, 0x3000);
     wz(f, g_hero_desc, HERO_COUNT * HERO_DESC_SIZE);
     for (i32 i = 0; i < PERSONA_COUNT; i++)
         wz(f, g_persona_desc[i].raw, PERSONA_DESC_SIZE);
     put32(f, 0); put32(f, 0);
-    wz(f, NULL, 0x620);
+    wz(f, lieu_tab509b40(), 0x620);                /* word_509B40 */
     wz(f, NULL, 0xC8 + 3 * 0x28);
     wz(f, NULL, 0x100 + 0x30);
     wz(f, NULL, (0x40 + 0x6E) * 4);
@@ -425,7 +434,8 @@ static b8 game_save(i32 slot) {
     put32(f, g_combat_flags);                      /* debug_flags */
     put32(f, g_cinematic_mode);
     wz(f, NULL, 8 + 4 + 4 + 8 + 0xC + 0xC + 8 + 8 + 8 + 4);
-    wz(f, NULL, 9 * 8);                            /* hot keys: TODO hook */
+    wz(f, iv ? (const void *)iv->hotkeys : NULL, 9 * 8);   /* byte_4B33F8: hot keys */
+    free(iv);
     b8 ok = !ferror(f);
     fclose(f);
     print("files: saved slot %d -> %s\n", slot, p);
@@ -439,8 +449,10 @@ typedef struct {
     u8  ent[3][ENTITY_SIZE];
     i32 pos[3][3], d30[3], d38[3], d34[3], head[3], d64[3];
     u8  lieu[0xFA0];
-    i32 inv_count;
-    u8  inv[INV_BYTES];
+    inv_save_t iv;
+    u8  ability[0xD2];
+    u8  tab509[0x620];
+    i32 score;
     u8  hero[HERO_COUNT * HERO_DESC_SIZE];
     u8  persona[PERSONA_COUNT][PERSONA_DESC_SIZE];
     i32 movement_locked, special_mode, skip_next, combat_flags, cinematic;
@@ -487,10 +499,16 @@ static b8 save_parse(const u8 *buf, size_t len, save_t *s) {
     }
     rdcpy(&r, s->lieu, 0xFA0);
     rd(&r, 0x300);
-    s->inv_count = rd32(&r);
-    rdcpy(&r, s->inv, INV_BYTES);
-    rd(&r, 4 + INV_BYTES + 4 + 4);
-    rd(&r, 0x5C4 + 0x80 + 0x9D8 + 0x9D8 + 0xD2 + 0x2BC + 0x2BC);
+    s->iv.count = rd32(&r);
+    rdcpy(&r, s->iv.table, INV_BYTES);
+    s->iv.saved_count = rd32(&r);
+    rdcpy(&r, s->iv.saved, INV_BYTES);
+    rd32(&r);                                      /* dword_4B430C */
+    s->iv.category = rd32(&r);
+    rd(&r, 0x5C4 + 0x80 + 0x9D8 + 0x9D8);
+    rdcpy(&r, s->ability, 0xD2);
+    rdcpy(&r, s->iv.res, 0x2BC);
+    rdcpy(&r, s->iv.res_init, 0x2BC);
     const u8 *tab = rd(&r, 0x860);                 /* unk_4DAB60 copy */
     for (i32 i = 0; tab && i < 8; i++) {
         const u8 *q = tab + i * 0x10C + 0x50;
@@ -500,16 +518,20 @@ static b8 save_parse(const u8 *buf, size_t len, save_t *s) {
     s->movement_locked = rd32(&r);
     rd32(&r);                                      /* dword_4FF0A0 (var_528) */
     s->special_mode = rd32(&r);
-    rd(&r, 3 * 4 + 0xE + 0x3000);
+    s->score = rd32(&r);
+    rd(&r, 2 * 4 + 0xE + 0x3000);
     rdcpy(&r, s->hero, sizeof(s->hero));
     rdcpy(&r, s->persona, sizeof(s->persona));
-    rd(&r, 4 + 4 + 0x620 + 0xC8 + 3 * 0x28 + 0x100 + 0x30 + (0x40 + 0x6E) * 4);
+    rd(&r, 4 + 4);
+    rdcpy(&r, s->tab509, 0x620);
+    rd(&r, 0xC8 + 3 * 0x28 + 0x100 + 0x30 + (0x40 + 0x6E) * 4);
     rd(&r, 4 + 4 + 0xC + 1 + 4 + 0x8000 + 4 + 4 + 16 * 0xF0);
     s->skip_next = rd32(&r);
     rd32(&r);                                      /* dword_4B2B98 */
     s->combat_flags = rd32(&r);
     s->cinematic = rd32(&r);
-    rd(&r, 8 + 4 + 4 + 8 + 0xC + 0xC + 8 + 8 + 8 + 4 + 9 * 8);
+    rd(&r, 8 + 4 + 4 + 8 + 0xC + 0xC + 8 + 8 + 8 + 4);
+    rdcpy(&r, s->iv.hotkeys, 9 * 8);
     return !r.bad;
 }
 
@@ -547,6 +569,9 @@ static b8 game_load(i32 slot) {
         memcpy(g_persona_desc[i].raw, s->persona[i], PERSONA_DESC_SIZE);
         memset(g_persona_desc[i].raw, 0, 4);                 /* 0x43CBF6: [i*0x220] = 0 */
     }
+    memcpy(game_init_ability_bytes(), s->ability, 0xD2);    /* byte_4DCCC0 */
+    memcpy(lieu_tab509b40(), s->tab509, 0x620);              /* word_509B40 */
+    scene_score_set(s->score);                               /* score_counter */
     g_special_mode_active = s->special_mode;
     g_cinematic_mode      = s->cinematic;
     g_combat_flags        = s->combat_flags;
@@ -603,16 +628,10 @@ static b8 game_load(i32 slot) {
         if (ce && EROOT(ce)) EROOT(ce)->pos[1] = s->pos[a][1];
     }
 
-    /* Inventory: re-added item by item (no clear exists yet, see report). */
-    for (i32 i = 0; i < INV_BYTES / INV_ENTRY; i++) {
-        const u8 *q = s->inv + i * INV_ENTRY;
-        if (!q[0]) continue;
-        c8 name[9];
-        memcpy(name, q, 8);
-        name[8] = 0;
-        i32 qty = *(const i32 *)&q[0x14];
-        if (qty > 0) inv_add(name, qty, 0);
-    }
+    /* Inventory tables, then the equipped item back in hand (sub_426D2C). */
+    inv_load_state(&s->iv);
+    inv_rehold();
+    scene_hud_refresh();
 
     free(s);
     print("files: loaded slot %d (level %d)\n", slot, level);
@@ -872,6 +891,22 @@ reopen:
     screen_free();
     free(game);
     return game_load(slot) ? 1 : 0;
+}
+
+/* Headless test (DKE_SAVETEST=<frame>): give an item, save to slot 9, wipe,
+ * load it back and report the inventory. */
+void files_selftest(void);
+void files_selftest(void) {
+    files_set_dir();
+    inv_add("OB05A", 2, 0);
+    scene_score_set(321);
+    inv_save_t a; inv_save_state(&a);
+    b8 sv = game_save(9);
+    inv_new_game(); scene_score_set(0);
+    b8 ld = game_load(9);
+    inv_save_t b; inv_save_state(&b);
+    print("savetest: save=%d load=%d count %d->%d table %s score %d\n", sv, ld, a.count, b.count,
+          memcmp(a.table, b.table, INV_BYTES) ? "DIFF" : "same", scene_score_get());
 }
 
 /* Main menu FILES (sub_43E038(1, 1)) and in-game F3 (sub_43E038(1, 0)). */

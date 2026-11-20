@@ -166,6 +166,8 @@ void lieu_pending_event(i32 v, i32 phase); /* op 5: event5(v, phase)  */
 /* Pointer to a field in the live state buffer, so engine code can set the
  * guards handlers read (e.g. *lieu_state_slot(0x194) = submode). */
 i32 *lieu_state_slot(i32 off);
+/* word_509B40: item rows (8 i16 each, 0x80 rows), for the save game. */
+i16 *lieu_tab509b40(void);
 
 /* byte_507260: the text Divers(DV_ANIM_NAME) returns a pointer to. */
 const c8 *lieu_divers_text(void);

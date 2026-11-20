@@ -32,6 +32,7 @@ typedef struct {
 /* Creature table accessors — hide the static arrays in game_init.c */
 const creature_entry_t *game_init_get_creature(i32 id);
 u8   game_init_get_ability(i32 creature_id, i32 slot);
+u8  *game_init_ability_bytes(void);   /* byte_4DCCC0 (0xD2 bytes), save game */
 void game_init_set_ability(i32 creature_id, i32 slot, u8 mask_clear, u8 mask_set);
 
 /* sub_44F2A0 @ 0x44F2A0 — load MAT/OBC files for an entity.

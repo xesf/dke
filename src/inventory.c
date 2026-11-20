@@ -460,6 +460,64 @@ void inv_restore(void) {
     g_ui_state = 2;
 }
 
+/* ----------------------------------------------------------------------
+ * Save game blocks (sub_43AB20 / sub_43B9ED). The tables go to disk in the
+ * exe's 32-bit layout: 0x1C bytes per entry, the two INVENT.DLL cache
+ * pointers (+0x08, +0x0C) written as 0.
+ * ---------------------------------------------------------------------- */
+static void inv_pack(const inv_entry_t *t, u8 *out) {
+    memset(out, 0, INV_SAVE_TABLE);
+    for (i32 i = 0; i < INV_SLOTS; i++) {
+        u8 *q = out + i * 0x1C;
+        memcpy(q, t[i].name, 8);
+        q[0x10] = t[i].variants;
+        q[0x11] = t[i].equipped;
+        memcpy(q + 0x14, &t[i].qty, 4);
+        memcpy(q + 0x18, &t[i].pending, 4);
+    }
+}
+static void inv_unpack(inv_entry_t *t, const u8 *in) {
+    memset(t, 0, sizeof(inv_entry_t) * INV_SLOTS);
+    for (i32 i = 0; i < INV_SLOTS; i++) {
+        const u8 *q = in + i * 0x1C;
+        memcpy(t[i].name, q, 8);
+        t[i].name[7] = 0;
+        t[i].variants = q[0x10];
+        t[i].equipped = q[0x11];
+        memcpy(&t[i].qty, q + 0x14, 4);
+        memcpy(&t[i].pending, q + 0x18, 4);
+    }
+}
+/* sub_43A63D: a new game empties the inventory, its saved copy and the
+ * hot keys. */
+void inv_new_game(void) {
+    memset(g_inv, 0, sizeof(g_inv));
+    memset(g_inv_saved, 0, sizeof(g_inv_saved));
+    g_inv_count = g_inv_saved_count = g_inv_category = 0;
+    memset(g_inv_hotkey, 0, sizeof(g_inv_hotkey));
+}
+void inv_save_state(inv_save_t *s) {
+    s->count = g_inv_count;
+    inv_pack(g_inv, s->table);
+    s->saved_count = g_inv_saved_count;
+    inv_pack(g_inv_saved, s->saved);
+    s->category = g_inv_category;
+    memcpy(s->res, g_obj_res, sizeof(s->res));
+    memcpy(s->res_init, g_obj_res_init, sizeof(s->res_init));
+    memcpy(s->hotkeys, g_inv_hotkey, sizeof(s->hotkeys));
+}
+void inv_load_state(const inv_save_t *s) {
+    g_inv_count = s->count;
+    inv_unpack(g_inv, s->table);
+    g_inv_saved_count = s->saved_count;
+    inv_unpack(g_inv_saved, s->saved);
+    g_inv_category = s->category;
+    memcpy(g_obj_res, s->res, sizeof(s->res));
+    memcpy(g_obj_res_init, s->res_init, sizeof(s->res_init));
+    memcpy(g_inv_hotkey, s->hotkeys, sizeof(s->hotkeys));
+    for (i32 k = 0; k < INV_HOTKEYS; k++) g_inv_hotkey[k][7] = 0;
+}
+
 /* ======================================================================
  * 3. Equip / holster (engine side, called by the screen and scripts)
  * ====================================================================== */
