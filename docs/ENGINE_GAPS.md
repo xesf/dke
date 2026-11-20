@@ -41,17 +41,14 @@ address in a comment.
 
 ### 1. Pause (P key)
 
-- `display_pause_screen` 0040A2B0 and 0040A280: the PAUSED%d.GIF screen, the cheat codes (easy mode, big head, dwarf
-  and other model overrides), and the screenshot.
-- 0044D68C, 0044D6C9; `ls_pause_sound` 004802B0, `ls_resume_sound` 00480260: called from `process_input_command`.
-- Time compensation 004067EA, 0041FAA2, 0041FAD1: timers shift by the paused time. Without it, cooldowns and
-  animations jump ahead after a pause or the inventory.
+- Done (`src/pause.c`): the PAUSEDn screen with the cheat codes, sound pause / resume, and the clock shift
+  around modal screens. Left out: the PrintScreen PCX capture.
 
 ### 2. Gamma and colour settings
 
-- Gamma picker on first run 0040ADE0, `apply_screen_gamma` 0040ACC0, and 0040C920, 0040CA80, 0040CBF0.
-- The `DKE.CFG` loader 0045B361 also reads Brightness, Contrast, Saturation, Language and Detail. The port reads none
-  of these.
+- Done (`src/gamma.c`, `src/gamecfg.c`, `src/main.c`): the colour picker maths (0040C920, 0040CA80, 0040CBF0) and
+  the `DKE.CFG` keys Brightness, Contrast, Saturation, Detail and Language. Not ported: the DirectDraw gamma ramp
+  `apply_screen_gamma` 0040ACC0.
 
 ### 3. Level `.DAT` options and render modes
 
@@ -72,8 +69,9 @@ address in a comment.
 
 ### 5. Scripted fades and big animations
 
-- LIEU op 42 fades and crossfades: `sub_42BE0E` with 0042BC7C, 0042BD44, 0042EA19, 0042EE82. There is a TODO in
-  `lieu_cb.c`.
+- Done: LIEU op 42 is Arkhan's change of form, hero 3 <-> 2 (`sub_42BE0E`, `lieu_hero_transform`): the old form plays
+  "pNNtrans", the body swaps at the middle of the clip's window and the new form finishes the clip. Not ported: the
+  crossfade between the two renders (0042EE82, 0042BD44) and the camera move toward the hero.
 - Done (`src/cjr.c`): the CJR big-animation player for LIEU op 17. CJR files are Autodesk FLC; only DELTA_FLC chunks occur.
   Room and camera changes (cases 9, 10) and ESC wait while it runs. The fall offset of sub_454690 is skipped: it writes through
   `dword_4F91CC`, which nothing in the binary ever sets (null), so it looks dead.
@@ -84,14 +82,25 @@ address in a comment.
   card after movies 16, 21, 22 and 23 (`movie.c`, `scene.c`). Not run against a real movie yet.
 - Colour correction (brightness, contrast, gamma tables): 00431D38, 004327B2, 00432A3B, 00432BE1, 00432D7D.
 
-### 7. Objects across levels
+### 7. Script ops, inventory and saves
+
+- Done: every DIVERS op the level scripts use. Ops 5 (weapon charge), 6, 19 (Othello at the inn, HOTEL.DLL),
+  20, 22 (save screen), 25 (give / take item), 27 (end of game), 28 (blood spray at a bone; `play_sound_at_position`
+  is misnamed), 33 (credits page), 35 (cut the voice), 46 (Space held). Ops 13, 36 and 47 are used by no level.
+- Done: save games hold the inventory, its saved copy, the hot keys, weapon charges, `word_509B40`, the score and
+  `byte_4DCCC0`; a new game clears them. Not saved: dropped-item positions and object timers (the scripts re-place
+  objects), effect records.
+- Done: ranged shots take ammo (sub_475990) and stop at walls (get_distance_between_points); sabres and axes wear
+  and break into their 'Q' copy (consume_action_resource, execute_counter_attack). The flying blade is not drawn.
+
+### 8. Objects across levels
 
 - Done: LIEU LinkObjet (`LA_LINKOBJET`, 0x44B... case 0x20) now takes and releases the object for real: `weapon_link`
   (sub_47404E, palm bone from the script, word_509B40 row updated) and `weapon_unlink` (sub_474462). Not run in a level yet.
 - Not needed: 0047306E and 00476E86 only keep a dropped item's position until the level is released, which the port's
   per-level object reset already does. 0047347E is the debug object editor.
 
-### 8. Renderer fidelity
+### 9. Renderer fidelity
 
 - Done: colour-key texels. Material flag 0x200 (only P28 "CHEVEUX2" in the data) skips texels equal to the low flag byte (0x495B56).
 - Done: faces crossing the near plane are cut at cz = -32768 (0x49A790) in the in-game batch path, with shade and texel interpolated. The older single-model paths still drop them.

@@ -3180,6 +3180,10 @@ i32 scene_render(system_t *sys) {
             else { inv_use_by_name(nm, 0); inv_sort(); }
         }
     }
+    if (getenv("DKE_TRANSFORM")) {
+        static i32 n; extern i32 lieu_debug_transform(void);
+        if (++n >= atoi(getenv("DKE_TRANSFORM"))) lieu_debug_transform();
+    }
     if (getenv("DKE_SAVETEST")) {
         static i32 n; extern void files_selftest(void);
         if (++n == atoi(getenv("DKE_SAVETEST"))) files_selftest();

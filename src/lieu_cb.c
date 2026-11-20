@@ -972,6 +972,68 @@ static c8  g_byte_507260[0x10];  /* op 40: "s" + clip name                */
 
 /* ------------------------------------------------------------------------ */
 
+/*
+ * sub_42BE0E @ 0x42BE0E: Arkhan's transformation, hero 3 <-> 2. The exe
+ * spawns the new form as a companion, plays "pNNtrans" on both and
+ * crossfades the two renders by the old clip's strike window (anim+0x100:
+ * old form before lo, new form after hi) while the camera closes in, then
+ * makes the new form the player (POSPERSO, "g01arr01" pose then the idle
+ * 59 / -5). The port plays the old form's clip, swaps the body at the
+ * middle of the window, carries on with the new form's clip at the same
+ * time, and returns to the idle. No crossfade or camera move.
+ * aux_state: 0 start, 1 old form playing, 2 new form playing.
+ */
+static i32 lieu_hero_transform(lieu_action_t *n) {
+    entity_t *p = g_player_entity;
+    if (!p) return 1;
+    i32 from = E32(p, 0xB0), to = (from == 3) ? 2 : 3;
+    c8 clip[16];
+    if (n->aux_state == 0) {
+        snprintf(clip, sizeof(clip), "p%02dtrans", from);
+        if (!actor_play_named(p, clip)) { n->aux_state = 1; n->aux1 = 1 << 30; }
+        else {
+            const can_rec_t *r = (const can_rec_t *)EPTR(p, 0xD50);
+            i32 w = r ? *(const i32 *)&r->hdr[0x100] : 0;
+            i32 lo = w & 0xFFFF, hi = (i32)((u32)w >> 16);
+            n->aux1 = (hi > lo) ? (lo + hi) / 2 : (r ? CAN_DURATION(r) / 2 : 0);
+            n->aux_state = 1;
+        }
+        return 0;
+    }
+    if (n->aux_state == 1) {
+        i32 t = actor_anim_time(p);
+        if (t < n->aux1 && !actor_anim_done(p)) return 0;
+        actor_hero_swap(to);                                /* POSPERSO(v41) */
+        p = g_player_entity;
+        if (!p) return 1;
+        inv_rehold();                                       /* before the clip: it reloads the move set */
+        snprintf(clip, sizeof(clip), "p%02dtrans", to);
+        actor_play_named(p, clip);
+        n->aux0 = 0;
+        n->p68 = 0;
+        n->aux_state = 2;
+        return 0;
+    }
+    if (E32(p, 0xB0) != 2 && E32(p, 0xB0) != 3) return 1;   /* a script changed the body meanwhile */
+    if (!n->aux0) {                                         /* first frame of the new form: */
+        n->aux0 = 1;                                        /* jump to the same point in the clip */
+        if (n->aux1 < (1 << 30) && actor_anim_time(p) < n->aux1) {
+            i32 back = (i32)((f64)(n->aux1 - actor_anim_time(p)) / g_anim_divisor);
+            E32(p, 0xC28) -= back;
+            E32(p, 0xC34) -= back;
+        }
+    }
+    /* The clip counts as idle (-5), so the actor loop may restart it the
+     * frame it ends: a time going backwards also means it finished. */
+    i32 t = actor_anim_time(p), wrapped = t < n->p68;
+    n->p68 = t;
+    if (!actor_anim_done(p) && !wrapped) return 0;
+    actor_play_state(p, g_special_mode_active < 1 ? 59 : -5);        /* 0x42C93E */
+    g_ui_state = 2;                                                  /* dword_4DDE20 = 2: HUD redraw */
+    print("lieu: transformation done, hero P%02d\n", E32(p, 0xB0));
+    return 1;
+}
+
 static i32 cb_divers(i32 op, i32 a, i32 b) {
     entity_t *e;
 
@@ -1510,10 +1572,16 @@ static i32 cb_divers(i32 op, i32 a, i32 b) {
         /* TODO HUD refresh hook */
         return 0;
 
-    /* op 42 @ 0x448CD9 — sub_42BE0E() (one full world tick/render). */
-    case 42:
-        /* TODO */
+    /* op 42 @ 0x448CD9 — sub_42BE0E: Arkhan changes form (hero 2 <-> 3).
+     * Queued through DIVERSEMPILE, where lieu_hero_transform runs it over
+     * several frames; a direct call does the swap at once. */
+    case 42: {
+        if (g_player_entity) {
+            actor_hero_swap(E32(g_player_entity, 0xB0) == 3 ? 2 : 3);
+            inv_rehold();
+        }
         return 0;
+    }
 
     /* op 43 @ 0x448CE3 — special_mode_active ^= 1, dword_505DD8 = it;
      * player: CEC==1 -> CF0=0; CEC==0 -> CF0=1; update_player_interface. */
@@ -2126,6 +2194,8 @@ i32 lieu_action_dispatch(lieu_action_t *n, u32 now_ms) {
         return 1;
 
     case LA_DIVERSEMPILE:                      /* case 37 @ 0x44CC77 */
+        if (n->x == 42) return lieu_hero_transform(n);
+
         /* dkev completes the node BEFORE the call; nothing in sub_446E19
          * queues, so calling first and returning 1 is equivalent. */
         cb_divers(n->x, n->y, n->z);
@@ -2540,6 +2610,19 @@ i32 *lieu_state_slot(i32 off) { return &LIEU_ST(g_lieu_state, off); }
 
 /* Debug: place persona `id` next to the player and start a fight (the
  * script's POSPERSO + COMBAT), the hero on autofight (dword_4B219C). */
+/* Headless test (DKE_TRANSFORM=<frame>): run Arkhan's change of form, one
+ * step per frame from that frame on. */
+i32 lieu_debug_transform(void) {
+    static lieu_action_t n;
+    static i32 done;
+    if (done) return 1;
+    static i32 setup;
+    if (!setup++ && g_player_entity && E32(g_player_entity, 0xB0) < 2) actor_hero_swap(2);
+    n.x = 42;
+    done = lieu_hero_transform(&n);
+    return done;
+}
+
 void lieu_debug_fight(i32 id, const c8 *clip) {
     entity_t *p = g_player_entity;
     if (!p || !EROOT(p)) return;
