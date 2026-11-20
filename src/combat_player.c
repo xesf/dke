@@ -588,13 +588,6 @@ void player_input_default(void) {
     if (!p || !EDESC(p) || DESC_HP(p) <= 0) return;
     combat_ctx_t c;
     ctx_init(&c);
-    if (getenv("DKE_AIDBG")) {
-        static i32 last = -1; static i32 n;
-        if (E32(p, 0xD04) != last || (E32(p, 0xD04) == 27 && ++n % 100 == 0))
-            print("pstate %d -> %d done=%d animst=%d hp=%d t=%d dur=%d\n", last, E32(p, 0xD04), actor_anim_done(p), E32(p, 0xD58),
-                  DESC_HP(p), actor_anim_time(p), ANIMREC(p) ? CAN_DURATION(ANIMREC(p)) : -1);
-        last = E32(p, 0xD04);
-    }
     if (getenv("DKE_AIDBG") && key(VK_CTRL_))
         print("pin: stance=%d d04=%d busy=%d ranged=%d cEC=%d d1=%d d2=%d\n", E32(p, 0xD60), E32(p, 0xD04),
               E32(p, 0xCE8), c.ranged, E32(p, 0xCEC), c.d1, c.d2);
@@ -821,6 +814,16 @@ void player_input_tick(void) {
     /* special_render_flags != 0 -> no input (0x466884).
      * dword_4B219C && D60 && !desc[0x96]: the companions' combat AI runs
      * with player_entity swapped (sub_4701E0), not ported. */
+    entity_t *p = g_player_entity;
+    if (p && EDESC(p)) {
+        if (getenv("DKE_AIDBG")) {
+            static i32 last = -1; static i32 n;
+            if (E32(p, 0xD04) != last || (E32(p, 0xD04) == 27 && ++n % 100 == 0))
+                print("pstate %d -> %d done=%d animst=%d hp=%d t=%d dur=%d\n", last, E32(p, 0xD04), actor_anim_done(p), E32(p, 0xD58),
+                      DESC_HP(p), actor_anim_time(p), ANIMREC(p) ? CAN_DURATION(ANIMREC(p)) : -1);
+            last = E32(p, 0xD04);
+        }
+    }
     if (g_control_scheme) player_input_alt();
     else                  player_input_default();
 }

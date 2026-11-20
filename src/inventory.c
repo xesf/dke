@@ -513,6 +513,33 @@ i32 inv_take_ammo(const c8 *weapon) {
     return 1;
 }
 
+/* consume_action_resource @ 0x4012D6: the held weapon `name` (letter at
+ * [4]) loses `cost` charges. Returns 1 when it is (or just got) empty. */
+i32 inv_wear(const c8 *name, i32 cost) {
+    i32 id = inv_name_id(name);
+    const obj_record_t *r = id ? obj_rec(id) : NULL;
+    if (!r || !(r->flags & 2)) return 0;
+    i32 k = r->arme, v = name[4] ? name[4] - 'A' : 0;
+    if (k <= 0 || k >= OBJ_RES_ROWS || v < 0 || v >= OBJ_RES_COLS) return 0;
+    if (g_obj_res[k][v] <= 0) return 1;
+    g_obj_res[k][v] = (i16)(g_obj_res[k][v] - cost);
+    return g_obj_res[k][v] <= 0;
+}
+
+/* execute_counter_attack @ 0x411A00, inventory part: the held weapon
+ * `name` (the object's own name, renamed in place) breaks: one copy
+ * leaves the inventory, the name becomes 'Q...' (the broken weapon) and
+ * nbobj of it come back, equipped. */
+void inv_weapon_break(c8 *name) {
+    i32 id = inv_name_id(name);
+    const obj_record_t *r = id ? obj_rec(id) : NULL;
+    inv_remove_one(name);                       /* sub_426A24 */
+    inv_set_equipped(name, 0);                  /* sub_426BB5(obj, 0) */
+    name[0] = 'Q';
+    inv_add(name, r ? r->nbobj : 1, 0);         /* sub_42639A(obj, dword_4DB850[5*id], 0) */
+    inv_set_equipped(name, 1);
+}
+
 /* sub_43A63D: a new game empties the inventory, its saved copy and the
  * hot keys. */
 void inv_new_game(void) {

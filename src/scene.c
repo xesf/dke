@@ -3199,6 +3199,24 @@ i32 scene_render(system_t *sys) {
                 snprintf(clip, sizeof(clip), "P%02dGAR01", id);
                 lieu_debug_fight(id, clip);
             }
+            if (getenv("DKE_WEARTEST") && s_ff == at + 5) {      /* headless: hold a sabre with 2 charges */
+                for (i32 w = 1; w < 100; w++) {
+                    if (!(objets_flags(w) & 4) || w == 5 || w == 61 || w == 62) continue;
+                    c8 nm[8]; snprintf(nm, sizeof(nm), "OB%02dA", w);
+                    inv_use_by_name(nm, 1);
+                    inv_resource_pct(nm, 1);
+                    print("weartest: holding %s\n", nm);
+                    break;
+                }
+            }
+            if (getenv("DKE_WEARTEST") && (s_ff == at + 60 || s_ff == at + 61)) {
+                extern void combat_debug_wear(i32 cost);
+                combat_debug_wear(1);
+                if (g_player_entity) {
+                    game_object_t *o = (game_object_t *)EPTR(g_player_entity, 0xD64);
+                    print("weartest: held %s d2=%.4s\n", o ? o->name : "-", ESTR(g_player_entity, 0xD2));
+                }
+            }
         }
     }
     actor_frame((u32)system_get_gametime());

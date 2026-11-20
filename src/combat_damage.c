@@ -114,10 +114,8 @@ static u8 weapon_flags(const entity_t *e) {
     const creature_entry_t *c = e && EDESC(e) ? game_init_get_creature(EDESC(e)[0x97]) : NULL;
     return c ? c->flags : 0;
 }
-static u8 class_flags(i32 cls) {
-    const creature_entry_t *c = game_init_get_creature(cls);
-    return c ? c->flags : 0;
-}
+/* combat_ability_table[id*20] (0x4DB860) = the OBJETS.CTX record flags. */
+static u8 class_flags(i32 cls) { return (cls > 0 && cls < 100) ? objets_flags(cls) : 0; }
 static i32 has_ranged_weapon(const entity_t *e) {     /* check_entity_special_abilities @ 0x401129 */
     return e && (weapon_flags(e) & 0xF0) != 0;
 }
@@ -313,10 +311,31 @@ static void weapon_wear(i32 cost) {
     entity_t *p = g_player_entity;
     if (!p || ESTR(p, 0xD2)[0] != 'O' || (g_debug_flags & 2) || g_cinematic_mode || g_game_state < 2)
         return;
-    /* TODO needs get_entity_character(p+0xD2), get_character_action_index,
-     * game_init_resource_table(); on depletion port execute_counter_attack. */
-    (void)cost;
+    game_object_t *o = (game_object_t *)EPTR(p, 0xD64);    /* get_entity_character(p+0xD2) */
+    if (!o || !inv_wear(o->name, cost)) return;
+    /* execute_counter_attack @ 0x411A00: sabres and axes break, except 5, 61, 62. */
+    i32 id = 0;
+    if (sscanf(o->name + 2, "%2d", &id) != 1 || id == 5 || id == 61 || id == 62) return;
+    if (!(class_flags(id) & 0x0C)) return;
+    /* process_counter_attack(.., 0) @ 0x410F76: the blade ("armeb", the
+     * last node of the weapon chain) comes off. The flying piece is not drawn. */
+    obc_node_t *n = o->root;
+    while (n && n->child) n = n->child;
+    if (n && n->parent && strcmp(n->name, "armeb") == 0) n->parent->child = NULL;
+    c8 old[8];
+    memcpy(old, o->name, sizeof(old));
+    inv_weapon_break(o->name);                             /* also renames o->name to 'Q' */
+    for (i32 i = 0; i < OBJ_SLOTS; i++) {                  /* other slots with this item */
+        game_object_t *s2 = object_slot(i);
+        if (s2 && s2 != o && s2->used && strncmp(s2->name, old, 4) == 0) s2->name[0] = 'Q';
+    }
+    ESTR(p, 0xD2)[0] = 'Q';
+    sfx_entity_named(p, "break");
 }
+
+/* Headless test hook (DKE_WEARTEST). */
+void combat_debug_wear(i32 cost);
+void combat_debug_wear(i32 cost) { weapon_wear(cost); }
 
 /* =========================================================================
  * Damage — calculate_entity_damage @ 0x401000.
