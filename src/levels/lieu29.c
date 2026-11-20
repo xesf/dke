@@ -62,12 +62,12 @@ static void tick_body(void) {
             CB->animation("SG26FRA01");
             /* 0x7CD1 */
             if (ST(ST_HERO) == P_ARKHAN2) {
-                CB->divers_empile(DV_BONE_SOUND, ST(ST_HERO), 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
                 CB->animation("SG02ATT07");
             }
             /* 0x7D06 */
             if (ST(ST_HERO) == P_ARKHAN3) {
-                CB->divers_empile(DV_BONE_SOUND, ST(ST_HERO), 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
                 CB->animation("SG03ATT07");
             }
             /* 0x7D3B */
@@ -105,12 +105,12 @@ static void tick_body(void) {
         ST(V_EVENT_2) = 0;
         /* 0x7EAC */
         if (ST(ST_HERO) == P_ARKHAN2) {
-            CB->divers_empile(DV_BONE_SOUND, ST(ST_HERO), 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
             CB->animation("SG02ATT07");
         }
         /* 0x7EE1 */
         if (ST(ST_HERO) == P_ARKHAN3) {
-            CB->divers_empile(DV_BONE_SOUND, ST(ST_HERO), 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
             CB->animation("SG03ATT07");
         }
         /* 0x7F16 */
@@ -170,7 +170,7 @@ static void tick_body(void) {
         CB->select_pile(1, 2);
         CB->retire_zone(7);
         CB->bloque(BLOQUE_ALL);
-        CB->divers_empile(DV_BONE_SOUND, 26, 1);
+        CB->divers_empile(DV_BLOOD_AT_BONE, 26, 1);
         CB->combat(P_PHEDORIA, -1);
         ST(V_ENGAGED_PERSONA) = P_PHEDORIA;
         CB->stop_joindre(-P_PHEDORIA);
@@ -187,7 +187,7 @@ static void tick_body(void) {
         CB->select_pile(2, 2);
         CB->retire_zone(7);
         CB->bloque(BLOQUE_ALL);
-        CB->divers_empile(DV_BONE_SOUND, 15, 1);
+        CB->divers_empile(DV_BLOOD_AT_BONE, 15, 1);
         CB->combat(P_LORY, -1);
         CB->stop_joindre(-P_LORY);
         CB->animation("SP15IMP54");

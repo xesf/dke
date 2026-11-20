@@ -139,7 +139,7 @@ static void tick_body(void) {
         ST(ST_SCRIPT_BUSY) = 1;
         ST(ST_VIE(P_MALROT7)) = VIE_DEAD;
         CB->divers_empile(DV_CUT_SPEECH, 0, 0);
-        CB->divers_empile(DV_BONE_SOUND, P_MALROT7, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, P_MALROT7, 0);
         CB->combat(P_MALROT7, -1);
         ST(V_ENGAGED_PERSONA) &= 0xFF;
         CB->stop_joindre(-P_MALROT7);
@@ -155,7 +155,7 @@ static void tick_body(void) {
         CB->select_pile(0, 2);
         CB->divers(DV_WAS_HIT, P_MALROT3, 1);
         CB->select_pile(1, 1);
-        CB->divers_empile(DV_BONE_SOUND, P_MALROT3, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, P_MALROT3, 0);
         CB->divers_empile(DV_CUT_SPEECH, 0, 0);
         CB->change_camera(-1, CAM_AUTO);
         /* 0x885A */
@@ -180,7 +180,7 @@ static void tick_body(void) {
         CB->select_pile(0, 2);
         CB->divers(DV_WAS_HIT, P_KALHI13, 1);
         CB->select_pile(1, 1);
-        CB->divers_empile(DV_BONE_SOUND, P_KALHI13, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, P_KALHI13, 0);
         CB->divers_empile(DV_CUT_SPEECH, 0, 0);
         CB->change_camera(-1, CAM_AUTO);
         /* 0x89C7 */

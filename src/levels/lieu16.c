@@ -321,14 +321,14 @@ static void tick_body(void) {
             CB->stop_joindre(-P_MAOR);
             ST(ST_VIE(P_MAOR)) = VIE_DEAD;
             CB->select_pile(2, 2);
-            CB->divers_empile(DV_BONE_SOUND, 17, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, 17, 0);
             CB->select_pile(1, 1);
             CB->animation("SP17IMP53");
             CB->animation("P17CAD");
             CB->pos_perso(P_MAOR, 0, 0, 0, 2, "P17CAD", 2, 0);
         } else {
             CB->stop_joindre(-P_MAOR);
-            CB->divers_empile(DV_BONE_SOUND, 17, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, 17, 0);
             CB->animation("SP17IMP13");
             CB->animation("P17IMP48");
             CB->animation("P17GAR03");
@@ -343,7 +343,7 @@ static void tick_body(void) {
         ST(V_DELIA_PHASE) = 20;
         CB->select_pile(1, 2);
         CB->stop_joindre(-P_DELIA);
-        CB->divers_empile(DV_BONE_SOUND, 10, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, 10, 0);
         CB->animation("SP10IMP51");
         CB->animation("P10CAD");
         CB->pos_perso(P_DELIA, 0, 0, 0, 2, "P10CAD", 3, 0);
@@ -389,7 +389,7 @@ static void tick_body(void) {
             if (CB->on_joindre(90)) {
                 CB->stop_joindre(-90);
             }
-            CB->divers_empile(DV_BONE_SOUND, 90, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, 90, 0);
             CB->animation("SP90IMP11");
             CB->animation("P90IMP46");
             CB->animation("P90GAR01");

@@ -203,14 +203,14 @@ static void tick_body(void) {
         if (CB->divers(DV_HP, P_GUARDIAN8, -1) <= 1) {
             ST(ST_VIE(P_GUARDIAN8)) = VIE_DEAD;
             CB->stop_joindre(-P_GUARDIAN8);
-            CB->divers_empile(DV_BONE_SOUND, P_GUARDIAN8, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, P_GUARDIAN8, 0);
             CB->animation("SP48IMP55");
             CB->animation("P48CAD");
             CB->pos_perso(P_GUARDIAN8, 0, 0, 0, 2, "P48CAD", 4, 0);
             CB->divers_empile(DV_SCREEN, 2, 0);
         } else {
             CB->stop_joindre(-P_GUARDIAN8);
-            CB->divers_empile(DV_BONE_SOUND, P_GUARDIAN8, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, P_GUARDIAN8, 0);
             CB->animation("SP48IMP15");
             CB->animation("P48IMP50");
             CB->animation("P48GAR05");

@@ -73,7 +73,7 @@ static void tick_body(void) {
         CB->change_camera(1, CAM_AUTO);
     }
     /* 0x787C */
-    if (CB->divers(DV_ACTION_EDGE, 0, 0) == 1 && ST(L44_HERO_ACTING) == 1 && ST(L44_ACTION_ANIM_DONE) == 1) {
+    if (CB->divers(DV_ACTION_HELD, 0, 0) == 1 && ST(L44_HERO_ACTING) == 1 && ST(L44_ACTION_ANIM_DONE) == 1) {
         CB->bloque(BLOQUE_ALL);
         ST(L44_HERO_ACTING) = 0;
         ST(L44_ACTION_ANIM_DONE) = 0;

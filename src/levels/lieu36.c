@@ -78,7 +78,7 @@ static void tick_body(void) {
     /* 0x7EDA - ST(L36_PLAYER_HIT_COUNT) changed: the hero is hurt */
     if (ST(L36_PLAYER_HIT_COUNT) != l36_prev_8d4) {
         l36_prev_8d4 = ST(L36_PLAYER_HIT_COUNT);
-        CB->divers(DV_BONE_SOUND, ST(ST_HERO), 0);
+        CB->divers(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
         if (CB->divers(DV_HP, ST(ST_HERO), -1) - 50 > 0) {
             CB->divers(DV_HP, ST(ST_HERO), CB->divers(DV_HP, ST(ST_HERO), -1) - 50);
         } else {
@@ -372,7 +372,7 @@ static void tick_body(void) {
         CB->divers_empile(DV_CUT_SPEECH, 0, 0);
         ST(ST_VIE(P_KONKALITE12)) = VIE_DEAD;
         CB->stop_joindre(-P_KONKALITE12);
-        CB->divers_empile(DV_BONE_SOUND, 82, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, 82, 0);
         CB->animation("SP82IMP53");
         CB->animation("P82_65535");
         CB->animation("P82CAD");

@@ -99,13 +99,13 @@ static void tick_body(void) {
                 ST(ST_VIE(91)) = VIE_DEAD;
                 ST(V_ENGAGED_PERSONA) = 0;
                 ST(L38_GUARD91_STATE) = 2;
-                CB->divers_empile(DV_BONE_SOUND, 91, 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, 91, 0);
                 CB->animation("SP91IMP51");
                 CB->animation("P91ARR01");
                 CB->pos_perso(91, -1, -1, -1, 4, "", -1, 0);
                 CB->divers_empile(DV_SCREEN, 2, 0);
             } else {
-                CB->divers_empile(DV_BONE_SOUND, 91, 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, 91, 0);
                 CB->animation("SP91IMP01");
                 CB->animation("P91GAR01");
                 CB->combat(91, 1);

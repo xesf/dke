@@ -3047,6 +3047,42 @@ static void movie_over_card(void) {
     scene_free_bmap(&img);
 }
 
+/* DIVERS op 33 @ 0x448721: one credits page DATAS>MENUS>CREDITS>CRED_nn,
+ * shown until Esc / Space / Enter (each wait also waits for release). */
+static i32 credits_key(void) {
+    const i32 *a = state->system.actions;
+    return a[27] || a[32] || a[13];
+}
+static void credits_pump(u32 *fb) {
+    ls_blit(&state->system, fb);
+    ls_flip(&state->system);
+    ls_update_events(&state->system);
+    ls_delay(16);
+}
+void scene_credits_page(i32 n) {
+    if (!state || !state->graphic.front_buffer) return;
+    c8 name[64];
+    snprintf(name, sizeof(name), "DATAS>MENUS>CREDITS>CRED_%02d.CIF", n);
+    bmap_t *img = game_init_load_cursor(name);
+    if (!img) { print("scene: credits %s missing\n", name); return; }
+    u32 *fb = state->graphic.front_buffer;
+    i32 fw = state->graphic.width, fh = state->graphic.height;
+    while (credits_key() && !state->system.quit) credits_pump(fb);       /* keys up */
+    memset(fb, 0, (size_t)fw * fh * sizeof(u32));
+    if (img->pixels && img->palette)
+        blit_bmap_to_framebuffer(fb, fw, fh, img, img->palette,
+                                 fw > img->width ? (fw - img->width) / 2 : 0,
+                                 fh > img->height ? (fh - img->height) / 2 : 0);
+    u32 t0 = ls_tick();
+    while (!credits_key() && !state->system.quit) {                     /* wait press */
+        if (getenv("DKE_FRAMES") && ls_tick() - t0 > 1500) break;        /* headless */
+        credits_pump(fb);
+    }
+    while (credits_key() && !state->system.quit) credits_pump(fb);       /* wait release */
+    state->system.actions[27] = 0;                                       /* no menu from this Esc */
+    scene_free_bmap(&img);
+}
+
 extern i32 lieu_game_exit_take(void);
 i32 scene_render(system_t *sys) {
     envfx_tick(system_get_gametime());             /* 0x42F565 */

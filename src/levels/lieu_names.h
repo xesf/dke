@@ -252,7 +252,7 @@ enum {
     DV_GIVE_ITEM       = 25,
     DV_PERSONA_ITEMS   = 26,  /* persona a */
     DV_END_GAME        = 27,
-    DV_BONE_SOUND      = 28,
+    DV_BLOOD_AT_BONE     = 28,
     DV_PERSONA_PRESENT = 29,  /* persona a */
     DV_P25_SOUND       = 30,
     DV_STRUCT_DIST     = 31,
@@ -270,7 +270,7 @@ enum {
     DV_SPECIAL_MODE    = 43,
     DV_USE_ITEM        = 44,
     DV_WAIT_KEY        = 45,
-    DV_ACTION_EDGE     = 46,
+    DV_ACTION_HELD     = 46,
     DV_SOLID_TILE      = 47,
     DV_RANDOM          = 48,
 };

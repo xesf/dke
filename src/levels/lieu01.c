@@ -188,7 +188,7 @@ static void tick_body(void) {
             ST(V_EVENT_39) = 0;
             CB->select_pile(2, 2);
             CB->stop_joindre(-ST(ST_HERO));
-            CB->divers_empile(DV_BONE_SOUND, ST(ST_HERO), 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
             if (ST(ST_HERO) == P_ARKHAN0) CB->animation("SG00ATT07");
             if (ST(ST_HERO) == P_ARKHAN1) CB->animation("SG01ATT07");
             CB->modify_var(&ST(L01_PHEDORIA_STEP), 2);

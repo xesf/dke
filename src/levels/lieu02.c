@@ -305,7 +305,7 @@ static void tick_body(void) {
     if (ST(V_EVENT_38) == 1) {
         ST(V_EVENT_38) = 0;
         CB->select_pile(1, 1);
-        CB->divers_empile(DV_BONE_SOUND, ST(ST_HERO), 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
         CB->divers_empile(DV_HP, ST(ST_HERO), 0);
         CB->modify_var(&ST(ST_HERO), 4);
         CB->select_pile(0, 1);
@@ -388,7 +388,7 @@ static void tick_body(void) {
     if (ST(V_EVENT_39) == 1) {
         ST(V_EVENT_39) = 0;
         CB->select_pile(2, 2);
-        CB->divers_empile(DV_BONE_SOUND, ST(ST_HERO), 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
         CB->animation("SG01ATT07");
         CB->animation("P26GAR03");
         CB->divers_empile(DV_HP, ST(ST_HERO), 0);

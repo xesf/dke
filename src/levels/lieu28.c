@@ -114,7 +114,7 @@ static void tick_body(void) {
         CB->select_pile(1, 2);
         CB->combat(P_ARCHIVIST, -1);
         CB->stop_joindre(-P_ARCHIVIST);
-        CB->divers_empile(DV_BONE_SOUND, 5, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, 5, 0);
         CB->animation("SP05IMP51");
         CB->animation("P05CAD");
         CB->pos_perso(P_ARCHIVIST, 0, 0, 0, 2, "P05CAD", 2, 0);

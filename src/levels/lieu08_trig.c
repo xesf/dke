@@ -5384,7 +5384,7 @@ static void trig30(void) {
         CB->divers_empile(DV_RANDOM, 0, 0);
         CB->divers_empile(DV_RANDOM, 0, 0);
         CB->divers_empile(DV_RANDOM, 0, 0);
-        CB->divers_empile(DV_BONE_SOUND, P_DELIA, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, P_DELIA, 0);
         CB->animation("SP10IMP51");
         CB->animation("P10cad_10");
         CB->animation("Sar_10");

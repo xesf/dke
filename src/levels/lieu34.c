@@ -328,12 +328,12 @@ static void tick_body(void) {
         /* 0x8D40 */
         if (CB->divers(DV_HP, P_SORDOS, -1) <= 1) {
             ST(ST_VIE(P_SORDOS)) = VIE_DEAD;
-            CB->divers_empile(DV_BONE_SOUND, P_SORDOS, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, P_SORDOS, 0);
             CB->animation("SP23IMP53");
             CB->animation("P23CAD");
             CB->pos_perso(P_SORDOS, 0, 0, 0, 2, "P23CAD", 3, 0);
         } else {
-            CB->divers_empile(DV_BONE_SOUND, P_SORDOS, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, P_SORDOS, 0);
             CB->animation("SP23IMP13");
             CB->animation("P23IMP48");
             CB->combat(P_SORDOS, 4);
@@ -360,13 +360,13 @@ static void tick_body(void) {
             ST(ST_VIE(P_THANANDAR24)) = VIE_DEAD;
             ST(L34_STORY_PART) = 10;
             CB->stop_joindre(-P_THANANDAR24);
-            CB->divers_empile(DV_BONE_SOUND, P_THANANDAR24, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, P_THANANDAR24, 0);
             CB->animation("SP24IMP51");
             CB->animation("P24CAD");
             CB->pos_perso(P_THANANDAR24, 0, 0, 0, 2, "P24CAD", 2, 0);
         } else {
             CB->stop_joindre(-P_THANANDAR24);
-            CB->divers_empile(DV_BONE_SOUND, P_THANANDAR24, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, P_THANANDAR24, 0);
             CB->animation("SP24IMP11");
             CB->animation("P24IMP46");
             CB->combat(P_THANANDAR24, 4);

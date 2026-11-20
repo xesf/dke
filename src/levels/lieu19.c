@@ -257,7 +257,7 @@ static void tick_body(void) {
         CB->combat(P_MALROT5, -1);
         ST(V_ENGAGED_PERSONA) = P_MALROT5;
         CB->stop_joindre(-P_MALROT5);
-        CB->divers_empile(DV_BONE_SOUND, 65, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, 65, 0);
         CB->animation("SP65IMP52");
         CB->animation("P65CAD");
         CB->divers_empile(DV_LOOK_AT_PLAYER, P_MALROT5, 1);

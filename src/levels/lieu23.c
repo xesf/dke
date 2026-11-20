@@ -76,7 +76,7 @@ static void tick_body(void) {
         if (CB->divers(DV_HP, P_GUARDIAN13, -1) <= 1) {
             ST(ST_VIE(P_GUARDIAN13)) = VIE_DEAD;
             CB->stop_joindre(-P_GUARDIAN13);
-            CB->divers_empile(DV_BONE_SOUND, 53, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, 53, 0);
             CB->animation("SP53IMP53");
             CB->animation("P53_65535");
             CB->animation("P53CAD");
@@ -92,7 +92,7 @@ static void tick_body(void) {
             }
         } else {
             CB->stop_joindre(-P_GUARDIAN13);
-            CB->divers_empile(DV_BONE_SOUND, 53, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, 53, 0);
             CB->animation("SP53IMP13");
             CB->animation("P53IMP48");
             CB->animation("P53_65535");
@@ -116,7 +116,7 @@ static void tick_body(void) {
         if (CB->divers(DV_HP, P_GUARDIAN14, -1) <= 1) {
             ST(ST_VIE(P_GUARDIAN14)) = VIE_DEAD;
             CB->stop_joindre(-P_GUARDIAN14);
-            CB->divers_empile(DV_BONE_SOUND, 54, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, 54, 0);
             CB->animation("SP54IMP52");
             CB->animation("P54_65535");
             CB->animation("P54CAD");
@@ -132,7 +132,7 @@ static void tick_body(void) {
             }
         } else {
             CB->stop_joindre(-P_GUARDIAN14);
-            CB->divers_empile(DV_BONE_SOUND, 54, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, 54, 0);
             CB->animation("SP54IMP12");
             CB->animation("P54IMP47");
             CB->animation("P54_65535");
@@ -213,7 +213,7 @@ static void tick_body(void) {
             if (ST(ST_PLAYER_WEAPON) != 0) {
                 CB->animation("P01IMP52");
             }
-            CB->divers_empile(DV_BONE_SOUND, ST(ST_HERO), 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
             CB->animation("P84ACT02");
             CB->dialogue("L10D93", ST(ST_HERO));
             CB->dialogue("L23D20", P_ZED84);
@@ -241,7 +241,7 @@ static void tick_body(void) {
             if (ST(ST_PLAYER_WEAPON) != 0) {
                 CB->animation("P01IMP52");
             }
-            CB->divers_empile(DV_BONE_SOUND, ST(ST_HERO), 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
             CB->dialogue("L23D20", P_ZED84);
             /* 37321 */
             if (CB->divers(DV_DESC_POS, ST(ST_HERO), 1) > -3081) {
@@ -297,7 +297,7 @@ static void tick_body(void) {
         CB->select_pile(1, 1);
         ST(V_EVENT_2) = 2;
         CB->divers_empile(DV_HP, ST(ST_HERO), 1);
-        CB->divers_empile(DV_BONE_SOUND, ST(ST_HERO), 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
         /* 38034 */
         if (ST(ST_HERO) == P_ARKHAN2) {
             CB->animation("SG02ATT07");
@@ -353,7 +353,7 @@ static void tick_body(void) {
         CB->select_pile(1, 1);
         ST(V_EVENT_34) = 2;
         CB->divers_empile(DV_HP, ST(ST_HERO), 1);
-        CB->divers_empile(DV_BONE_SOUND, ST(ST_HERO), 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
         /* 38809 */
         if (ST(ST_HERO) == P_ARKHAN2) {
             CB->animation("G02ATT07");

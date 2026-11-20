@@ -3427,7 +3427,7 @@ static void trig12(void) {
         ST(V_ENGAGED_PERSONA) = P_KALHI13;
         CB->stop_joindre(-P_KALHI13);
         CB->combat(P_KALHI13, 0);
-        CB->divers_empile(DV_BONE_SOUND, P_DELIA, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, P_DELIA, 0);
         /* 0x15F4F */
         if (ST(ST_VIE(P_DANRYS)) == 1) {
             CB->stop_joindre(-P_DANRYS);

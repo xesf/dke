@@ -385,7 +385,7 @@ static void tick_body(void) {
     if (ST(V_EVENT_2) == 1) {
         ST(V_EVENT_2) = 0;
         CB->change_camera(6, CAM_AUTO);
-        CB->divers_empile(DV_BONE_SOUND, 1, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, 1, 0);
         CB->animation("SG01ATT07");
         CB->animation("P84ARR02_100");
         lieu_action_register("L10D30", P_ZED84, "SP84DIA59", "SP84ARR01_1000");
@@ -396,7 +396,7 @@ static void tick_body(void) {
     if (ST(V_EVENT_1) == 1) {
         ST(V_EVENT_1) = 0;
         CB->change_camera(6, CAM_AUTO);
-        CB->divers_empile(DV_BONE_SOUND, 1, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, 1, 0);
         CB->animation("SP01IMP51");
         CB->animation("P84ACT02");
         CB->animation("P84ARR01_100");
@@ -643,7 +643,7 @@ static void tick_body(void) {
         }
         CB->select_pile(2, 2);
         ST(V_EVENT_38) = 0;
-        CB->divers_empile(DV_BONE_SOUND, ST(ST_HERO), 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
         /* 0xBF67 */
         if (ST(ST_HERO) == P_ARKHAN2) {
             CB->animation("SP02IMP55");

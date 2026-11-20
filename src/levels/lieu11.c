@@ -102,13 +102,13 @@ static void tick_body(void) {
         if (CB->divers(DV_HP, P_GUARD, -1) <= 1) {
             ST(ST_VIE(P_GUARD)) = VIE_DEAD;
             CB->select_pile(2, 2);
-            CB->divers_empile(DV_BONE_SOUND, P_GUARD, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, P_GUARD, 0);
             CB->select_pile(1, 1);
             CB->animation("SP32IMP55");
             CB->animation("P32CAD");
             CB->pos_perso(P_GUARD, 0, 0, 0, 2, "P32CAD", 0xC, 0);
         } else {
-            CB->divers_empile(DV_BONE_SOUND, P_GUARD, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, P_GUARD, 0);
             CB->animation("SP32IMP15");
             CB->animation("P32IMP50");
             CB->animation("P32GAR05");

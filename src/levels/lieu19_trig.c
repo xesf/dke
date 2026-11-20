@@ -746,7 +746,7 @@ static void trig03(void) {
     if (ST(V_PLAYER_STRIKE) == 2 && ST(ST_SCRIPT_BUSY) == 0 && ST(V_ENGAGED_PERSONA) == 0 && ST(ST_VIE(P_MALROT5)) != VIE_DEAD) {
         ST(V_PLAYER_STRIKE) = -1;
         CB->stop_joindre(P_MALROT5);
-        CB->divers_empile(DV_BONE_SOUND, 65, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, 65, 0);
         CB->animation("SP65IMP52");
         CB->animation("P65CAD");
         CB->pos_perso(P_MALROT5, 0, 0, 0, 2, "P65CAD", 3, 0);

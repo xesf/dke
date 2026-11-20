@@ -1283,7 +1283,7 @@ static void trig02(void) {
     /* 0xD3A1 */
     if (ST(V_EVENT_33) == 1) {
         ST(V_EVENT_33) = 0;
-        CB->divers_empile(DV_BONE_SOUND, P_BOGDARAN, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, P_BOGDARAN, 0);
         /* 0xD3D4 */
         if (ST(V_DELIA_PHASE) == 11 && ST(ST_VIE(P_DELIA)) != VIE_DEAD) {
             CB->print_msg("joindreperm ln1650", 0, 0x122);
@@ -1790,7 +1790,7 @@ static void trig05(void) {
             CB->divers(DV_HP, P_DELIA, 1);
             CB->stop_joindre(-P_DELIA);
             CB->combat(P_DELIA, 0);
-            CB->divers_empile(DV_BONE_SOUND, P_DELIA, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, P_DELIA, 0);
             /* 0xE9D0 */
             if (ST(ST_VIE(P_BOGDARAN)) == 1) {
                 CB->stop_joindre(-P_BOGDARAN);

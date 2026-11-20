@@ -667,7 +667,7 @@ static void tick_body(void) {
                 }
                 /* 0xA38B */
                 if (ST(L07_PHEDORIA_TALK_STEP) == 2) {
-                    CB->divers_empile(DV_BONE_SOUND, ST(ST_HERO), 0);
+                    CB->divers_empile(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
                     CB->animation(lieu_anim_name(P_ARKHAN2, 0x1A));
                     CB->modify_var(&ST(V_DEATH_EVENT_SENT), 1);
                     return;
@@ -713,7 +713,7 @@ static void tick_body(void) {
         if (ST(V_EVENT_34) == 1) {
             ST(V_EVENT_34) = 0;
             CB->select_pile(0, 2);
-            CB->divers_empile(DV_BONE_SOUND, ST(ST_HERO), 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
             CB->animation(lieu_anim_name(P_ARKHAN2, 0x1A));
             CB->modify_var(&ST(V_DEATH_EVENT_SENT), 1);
             return;

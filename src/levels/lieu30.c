@@ -235,14 +235,14 @@ static void tick_body(void) {
             if (CB->divers(DV_HP, P_KONKALITE5, -1) <= 1) {
                 ST(ST_VIE(P_KONKALITE5)) = VIE_DEAD;
                 CB->stop_joindre(-P_KONKALITE5);
-                CB->divers_empile(DV_BONE_SOUND, 75, 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, 75, 0);
                 CB->animation("SP75IMP53");
                 CB->animation("P75CAD");
                 CB->pos_perso(P_KONKALITE5, 0, 0, 0, 2, "P75CAD", 2, 0);
                 CB->divers_empile(DV_SCREEN, 2, 0);
             } else {
                 CB->stop_joindre(-P_KONKALITE5);
-                CB->divers_empile(DV_BONE_SOUND, 75, 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, 75, 0);
                 CB->animation("SP75IMP13");
                 CB->animation("P75IMP48");
                 CB->animation("P75GAR03");
@@ -279,14 +279,14 @@ static void tick_body(void) {
             if (CB->divers(DV_HP, 94, -1) <= 1) {
                 ST(ST_VIE(94)) = VIE_DEAD;
                 CB->stop_joindre(-94);
-                CB->divers_empile(DV_BONE_SOUND, 94, 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, 94, 0);
                 CB->animation("SP94IMP53");
                 CB->animation("P94CAD");
                 CB->pos_perso(94, 0, 0, 0, 2, "P94CAD", 3, 0);
                 CB->divers_empile(DV_SCREEN, 2, 0);
             } else {
                 CB->stop_joindre(-94);
-                CB->divers_empile(DV_BONE_SOUND, 94, 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, 94, 0);
                 CB->animation("SP94IMP13");
                 CB->animation("P94IMP48");
                 CB->animation("P94GAR03");
@@ -319,14 +319,14 @@ static void tick_body(void) {
             if (CB->divers(DV_HP, P_KONKALITE2, -1) <= 1) {
                 ST(ST_VIE(P_KONKALITE2)) = VIE_DEAD;
                 CB->stop_joindre(-P_KONKALITE2);
-                CB->divers_empile(DV_BONE_SOUND, 72, 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, 72, 0);
                 CB->animation("SP72IMP53");
                 CB->animation("P72CAD");
                 CB->pos_perso(P_KONKALITE2, 0, 0, 0, 2, "P72CAD", 0xA, 0);
                 CB->divers_empile(DV_SCREEN, 2, 0);
             } else {
                 CB->stop_joindre(-P_KONKALITE2);
-                CB->divers_empile(DV_BONE_SOUND, 72, 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, 72, 0);
                 CB->animation("SP72IMP13");
                 CB->animation("P72IMP48");
                 CB->animation("P72GAR03");

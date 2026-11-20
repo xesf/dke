@@ -563,7 +563,7 @@ static void tick_body(void) {
         CB->select_pile(1, 2);
         CB->stop_joindre(-P_MALROT4);
         CB->combat(P_MALROT4, -1);
-        CB->divers_empile(DV_BONE_SOUND, P_MALROT4, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, P_MALROT4, 0);
         CB->animation("SP64IMP51");
         CB->animation("P64CAD");
         CB->pos_perso(P_MALROT4, 0, 0, 0, 2, "P64CAD", 2, 0);
@@ -586,7 +586,7 @@ static void tick_body(void) {
         CB->combat(P_PROVIDER, -1);
         ST(V_ENGAGED_PERSONA) = P_PROVIDER;
         CB->stop_joindre(-P_PROVIDER);
-        CB->divers_empile(DV_BONE_SOUND, P_PROVIDER, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, P_PROVIDER, 0);
         CB->animation("SP16IMP53");
         CB->animation("P16CAD");
         CB->pos_perso(P_PROVIDER, 0, 0, 0, 2, "P16CAD", 3, 0);
@@ -597,7 +597,7 @@ static void tick_body(void) {
         ST(ST_VIE(P_MALROT1)) = VIE_DEAD;
         CB->stop_joindre(-P_MALROT1);
         CB->combat(P_MALROT1, -1);
-        CB->divers_empile(DV_BONE_SOUND, P_MALROT1, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, P_MALROT1, 0);
         CB->animation("SP61IMP52");
         CB->animation("P61CAD");
         CB->pos_perso(P_MALROT1, 0, 0, 0, 2, "P61CAD", 0x18, 0);
@@ -638,14 +638,14 @@ static void tick_body(void) {
         if (CB->divers(DV_HP, 35, -1) <= 1) {
             ST(ST_VIE(35)) = VIE_DEAD;
             CB->stop_joindre(-35);
-            CB->divers_empile(DV_BONE_SOUND, 35, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, 35, 0);
             CB->animation("SP35IMP51");
             CB->animation("P35CAD");
             CB->pos_perso(35, 0, 0, 0, 2, "P35CAD", 4, 0);
             CB->divers_empile(DV_SCREEN, 2, 0);
         } else {
             CB->stop_joindre(-35);
-            CB->divers_empile(DV_BONE_SOUND, 35, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, 35, 0);
             CB->animation("SP35IMP06");
             CB->animation("P35GAR01");
             CB->combat(35, 0);

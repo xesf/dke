@@ -66,7 +66,7 @@ static void tick_body(void) {
         CB->combat(P_LEONA, -1);
         ST(ST_VIE(P_LEONA)) = VIE_DEAD;
         CB->stop_joindre(-P_LEONA);
-        CB->divers_empile(DV_BONE_SOUND, P_LEONA, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, P_LEONA, 0);
         CB->animation("SP14IMP52");
         CB->animation("P14CAD");
         CB->pos_perso(P_LEONA, 0, 0, 0, 2, "P14CAD", 2, 0);

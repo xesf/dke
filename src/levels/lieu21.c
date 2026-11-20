@@ -116,7 +116,7 @@ static void tick_body(void) {
         CB->combat(P_SUNSEER1, -1);
         ST(ST_VIE(P_SUNSEER1)) = VIE_DEAD;
         CB->stop_joindre(-P_SUNSEER1);
-        CB->divers_empile(DV_BONE_SOUND, P_SUNSEER1, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, P_SUNSEER1, 0);
         CB->animation("SP18IMP51");
         CB->animation("P18CAD");
         CB->pos_perso(P_SUNSEER1, 0, 0, 0, 2, "P18CAD", 2, 0);
@@ -387,7 +387,7 @@ static void tick_body(void) {
         if (ST(V_EVENT_34) == 1) {
             ST(V_EVENT_34) = 0;
             CB->divers(DV_HP, ST(ST_HERO), 0);
-            CB->divers_empile(DV_BONE_SOUND, ST(ST_HERO), 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
             CB->animation(lieu_anim_name(P_ARKHAN2, 26));
             CB->modify_var(&ST(V_DEATH_EVENT_SENT), 1);
         }
@@ -534,7 +534,7 @@ static void tick_body(void) {
             if (ST(V_EVENT_0) == 1) {
                 ST(V_EVENT_0) = 0;
                 CB->divers(DV_HP, ST(ST_HERO), 0);
-                CB->divers_empile(DV_BONE_SOUND, ST(ST_HERO), 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
                 /* 0x3D53 */
                 if (ST(ST_PLAYER_WEAPON) == 0) {
                     CB->animation("SP01IMP51");
@@ -607,7 +607,7 @@ static void tick_body(void) {
                 CB->combat(P_SUNSEER2, -1);
                 ST(ST_VIE(P_SUNSEER2)) = VIE_DEAD;
                 CB->stop_joindre(-P_SUNSEER2);
-                CB->divers_empile(DV_BONE_SOUND, P_SUNSEER2, 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, P_SUNSEER2, 0);
                 CB->animation("SP19IMP51");
                 CB->animation("P19CAD");
                 CB->pos_perso(P_SUNSEER2, 0, 0, 0, 2, "P19CAD", 7, 0);

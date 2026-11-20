@@ -236,7 +236,7 @@ static void tick_body(void) {
             ST(ST_SCRIPT_BUSY) = 1;
             CB->divers(DV_CUT_SPEECH, 0, 0);
             CB->divers_empile(DV_WAS_HIT, P_ARMAL, 1);
-            CB->divers_empile(DV_BONE_SOUND, 6, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, 6, 0);
             CB->bloque(BLOQUE_ALL);
             /* 0x9242 */
             if (CB->divers(DV_HP, P_ARMAL, -1) <= 150 || ST(ST_PLAYER_WEAPON) == 27) {
@@ -307,7 +307,7 @@ static void tick_body(void) {
             CB->select_pile(2, 2);
             CB->divers(DV_CUT_SPEECH, 0, 0);
             CB->divers_empile(DV_WAS_HIT, P_MALROT2, 1);
-            CB->divers_empile(DV_BONE_SOUND, 62, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, 62, 0);
             CB->bloque(BLOQUE_ALL);
             ST(ST_SCRIPT_BUSY) = 1;
             /* 0x9679 */

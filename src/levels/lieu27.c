@@ -314,13 +314,13 @@ static void tick_body(void) {
             /* 0x85EB */
             if (CB->divers(DV_HP, 36, -1) <= 1) {
                 ST(ST_VIE(36)) = VIE_DEAD;
-                CB->divers_empile(DV_BONE_SOUND, 36, 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, 36, 0);
                 CB->animation("SP36IMP51");
                 CB->animation("P36CAD");
                 CB->pos_perso(36, 0, 0, 0, 2, "P36CAD", 0x25, 0);
                 CB->divers_empile(DV_SCREEN, 2, 0);
             } else {
-                CB->divers_empile(DV_BONE_SOUND, 36, 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, 36, 0);
                 CB->animation("SP36IMP06");
                 CB->animation("P36GAR01");
                 CB->combat(36, 1);
@@ -425,7 +425,7 @@ static void tick_body(void) {
         if (ST(V_EVENT_34) == 1) {
             ST(V_EVENT_34) = 0;
             CB->divers(DV_HP, ST(ST_HERO), 0);
-            CB->divers_empile(DV_BONE_SOUND, ST(ST_HERO), 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
             CB->animation(lieu_anim_name(P_ARKHAN2, 0x1A));
             CB->modify_var(&ST(ST_HERO), 4);
         }

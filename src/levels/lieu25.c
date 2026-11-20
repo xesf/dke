@@ -78,7 +78,7 @@ static void tick_body(void) {
         ST(ST_VIE(P_RYLSADHAR20)) = VIE_DEAD;
         CB->select_pile(1, 2);
         CB->stop_joindre(-P_RYLSADHAR20);
-        CB->divers_empile(DV_BONE_SOUND, 20, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, 20, 0);
         CB->animation("SP20IMP99");
         CB->animation("P20CAD");
         CB->pos_perso(P_RYLSADHAR20, 0, 0, 0, 2, "P20CAD", 2, 0);
@@ -326,7 +326,7 @@ static void tick_body(void) {
         ST(V_EVENT_38) = 0;
         CB->select_pile(1, 2);
         ST(ST_VIE(P_RYLSADHAR20)) = VIE_DEAD;
-        CB->divers(DV_BONE_SOUND, 20, 0);
+        CB->divers(DV_BLOOD_AT_BONE, 20, 0);
         CB->animation("SP20IMP51");
         CB->bloque(BLOQUE_ALL);
         lieu_action_register("L25D26", P_RYLSADHAR20, "P20ATT03", "SP20CAD");
@@ -342,7 +342,7 @@ static void tick_body(void) {
         ST(V_EVENT_39) = 0;
         CB->select_pile(1, 2);
         ST(ST_VIE(P_RYLSADHAR20)) = VIE_DEAD;
-        CB->divers(DV_BONE_SOUND, 20, 0);
+        CB->divers(DV_BLOOD_AT_BONE, 20, 0);
         CB->animation("SP20IMP51");
         lieu_action_register("L25D55", P_RYLSADHAR20, "P20ATT03", "SP20CAD");
         CB->divers_empile(DV_LOOK_AT_PLAYER, P_RYLSADHAR20, 0);

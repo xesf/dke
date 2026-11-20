@@ -56,6 +56,7 @@
 #include "player.h"
 #include "dialogue.h"
 #include "combat.h"
+#include "fx.h"
 #include "menu/screens.h"
 #include "actor.h"
 #include "state.h"
@@ -1380,12 +1381,16 @@ static i32 cb_divers(i32 op, i32 a, i32 b) {
         g_game_exit_code = 3;
         return 0;
 
-    /* op 28 @ 0x44847D — positional sound at bone (b ? b : 0x11) of actor a:
+    /* op 28 @ 0x44847D — blood spray (play_sound_at_position is misnamed) at bone (b ? b : 0x11) of actor a:
      * play_sound_at_position(node+0x90, +0x94, +0x98 (world pos from
      * actor_node_positions), root->rot[2] + 0x4000). */
-    case 28:
-        /* TODO positional audio */
+    case 28: {                                 /* really the blood spray (fx_blood_start) */
+        e = actor_find(a);
+        obc_node_t *n = e ? EBONE(e, b ? b : 0x11) : NULL;
+        if (n && EROOT(e))
+            fx_blood_start(n->raw_88[2], n->raw_88[3], n->raw_88[4], EROOT(e)->rot[2] + 0x4000);
         return 0;
+    }
 
     /* op 29 @ 0x448516 — is persona a in one of the 3 actor slots
      * (companion, secondary, player; +0xB0 == a)? */
@@ -1430,9 +1435,11 @@ static i32 cb_divers(i32 op, i32 a, i32 b) {
     /* op 33 @ 0x448721 — credits screen "DATAS>MENUS>CREDITS>CRED_%02d.GIF"(a):
      * wait keys released (Esc/Space/Enter), show, wait press, wait release,
      * restore palette/screen. Blocking. */
-    case 33:
-        /* TODO */
+    case 33: {
+        extern void scene_credits_page(i32 n);
+        scene_credits_page(a);
         return 0;
+    }
 
     /* op 34 @ 0x448906 — player looks at persona a: actor a must be loaded
      * (else 0); player+0xC4C = b ? a+1 : 0 (sub_41CCB7 tracks C4C-1). */
@@ -1531,9 +1538,9 @@ static i32 cb_divers(i32 op, i32 a, i32 b) {
     case 45:
         return 0;
 
-    /* op 46 @ 0x448D82 — return process_input_command(0x20) (Space edge). */
+    /* op 46 @ 0x448D82 — return process_input_command(0x20) (Space held). */
     case 46:
-        return 0; /* TODO input edge; lieu_cb has g_action_key */
+        return g_action_key != 0;              /* process_input_command(0x20): Space held */
 
     /* op 47 @ 0x448D96 — is tile (a, b) inside a solid floor obstacle?
      * dword_4F915C = 0; for each poly in the NULL-terminated list

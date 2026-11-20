@@ -169,7 +169,7 @@ static void tick_body(void) {
         CB->select_pile(2, 2);
         CB->combat(P_DANRYS, -1);
         CB->stop_joindre(-P_DANRYS);
-        CB->divers_empile(DV_BONE_SOUND, P_DANRYS, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, P_DANRYS, 0);
         CB->animation("SP09IMP53");
         CB->animation("P09CAD");
         ST(V_EVENT_30) = 1;
@@ -195,7 +195,7 @@ static void tick_body(void) {
         ST(L15_PROGRESS_STEP) = 10;
         CB->combat(P_KALHI13, -1);
         CB->stop_joindre(-P_KALHI13);
-        CB->divers_empile(DV_BONE_SOUND, P_KALHI13, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, P_KALHI13, 0);
         CB->animation("SP13IMP52");
         CB->animation("P13CAD");
         CB->pos_perso(P_KALHI13, 0, 0, 0, 2, "P13CAD", 0xC, 0);
@@ -266,14 +266,14 @@ static void tick_body(void) {
         if (CB->divers(DV_HP, P_KONKALITE9, -1) <= 1) {
             ST(ST_VIE(P_KONKALITE9)) = VIE_DEAD;
             CB->stop_joindre(-P_KONKALITE9);
-            CB->divers_empile(DV_BONE_SOUND, P_KONKALITE9, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, P_KONKALITE9, 0);
             CB->animation("SP79IMP53");
             CB->animation("P79CAD");
             CB->pos_perso(P_KONKALITE9, 0, 0, 0, 2, "P79CAD", 0xA, 0);
             CB->divers_empile(DV_SCREEN, 2, 0);
         } else {
             CB->stop_joindre(-P_KONKALITE9);
-            CB->divers_empile(DV_BONE_SOUND, P_KONKALITE9, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, P_KONKALITE9, 0);
             CB->animation("SP79IMP13");
             CB->animation("P79IMP48");
             CB->animation("P79GAR03");

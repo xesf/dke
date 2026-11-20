@@ -139,14 +139,14 @@ static void tick_body(void) {
         /* 0x85E9 */
         if (CB->divers(DV_HP, P_DHORKAN11, -1) <= 1 && ST(ST_VIE(P_DHORKAN11)) != VIE_DEAD) {
             CB->stop_joindre(-P_DHORKAN11);
-            CB->divers_empile(DV_BONE_SOUND, P_DHORKAN11, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, P_DHORKAN11, 0);
             CB->animation("SP11IMP52");
             CB->pos_perso(P_DHORKAN11, 0, 0, 0, 2, "P11CAD", 4, 0);
             CB->divers_empile(DV_SCREEN, 2, 0);
             CB->evenement(1, 2000);
         } else {
             CB->stop_joindre(-P_DHORKAN11);
-            CB->divers_empile(DV_BONE_SOUND, P_DHORKAN11, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, P_DHORKAN11, 0);
             CB->animation("SP11IMP12");
             CB->animation("P11IMP47");
             /* 0x86A8 */
@@ -427,7 +427,7 @@ static void tick_body(void) {
             if (ST(ST_HERO) == P_ARKHAN3) {
                 CB->animation("SG03ATT07");
             }
-            CB->divers_empile(DV_BONE_SOUND, ST(ST_HERO), 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
             CB->animation("P26GAR03");
             CB->divers_empile(DV_HP, ST(ST_HERO), 0);
             CB->modify_var(&ST(ST_HERO), 4);

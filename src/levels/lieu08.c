@@ -37,15 +37,15 @@ static void tick_body(void) {
             CB->evenement(39, 500);
             /* 0x55A5 */
             if (!CB->random(2)) {
-                CB->divers_empile(DV_BONE_SOUND, 34, 0x10);
+                CB->divers_empile(DV_BLOOD_AT_BONE, 34, 0x10);
             }
             /* 0x55CB */
             if (CB->random(2) == 1) {
-                CB->divers_empile(DV_BONE_SOUND, 34, 0xE);
+                CB->divers_empile(DV_BLOOD_AT_BONE, 34, 0xE);
             }
             /* 0x55F1 */
             if (CB->random(2) == 2) {
-                CB->divers_empile(DV_BONE_SOUND, 34, 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, 34, 0);
             }
             CB->select_pile(0, 1);
         }
@@ -105,7 +105,7 @@ static void tick_body(void) {
         CB->combat(P_KALHI13, -1);
         ST(ST_VIE(P_KALHI13)) = VIE_DEAD;
         CB->stop_joindre(-P_KALHI13);
-        CB->divers_empile(DV_BONE_SOUND, P_KALHI13, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, P_KALHI13, 0);
         CB->animation("SP13IMP52");
         CB->animation("P13CAD");
         CB->pos_perso(P_KALHI13, 0, 0, 0, 2, "P13CAD", 0x21, 0);
@@ -119,7 +119,7 @@ static void tick_body(void) {
         CB->combat(P_KALHI33, -1);
         ST(ST_VIE(P_KALHI33)) = VIE_DEAD;
         CB->stop_joindre(-P_KALHI33);
-        CB->divers_empile(DV_BONE_SOUND, P_KALHI33, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, P_KALHI33, 0);
         CB->animation("SP33IMP52");
         CB->animation("P33CAD");
         CB->pos_perso(P_KALHI33, 0, 0, 0, 2, "P33CAD", 0x20, 0);
@@ -135,7 +135,7 @@ static void tick_body(void) {
         ST(V_DELIA_KILLED) = 8;
         CB->combat(P_DELIA, -1);
         CB->stop_joindre(-P_DELIA);
-        CB->divers_empile(DV_BONE_SOUND, P_DELIA, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, P_DELIA, 0);
         CB->animation("SP10IMP51");
         CB->animation("P10CAD");
         CB->pos_perso(P_DELIA, 0, 0, 0, 2, "P10CAD", 0x1E, 0);
@@ -344,12 +344,12 @@ static void tick_body(void) {
             if (CB->divers(DV_HP, P_GUARDIAN10, -1) <= 1) {
                 ST(ST_VIE(P_GUARDIAN10)) = VIE_DEAD;
                 CB->stop_joindre(-P_GUARDIAN10);
-                CB->divers_empile(DV_BONE_SOUND, P_GUARDIAN10, 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, P_GUARDIAN10, 0);
                 CB->animation("SP50IMP53");
                 CB->divers_empile(DV_SCREEN, 2, 0);
             } else {
                 CB->stop_joindre(-P_GUARDIAN10);
-                CB->divers_empile(DV_BONE_SOUND, P_GUARDIAN10, 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, P_GUARDIAN10, 0);
                 CB->animation("SP50IMP13");
                 CB->animation("P50IMP48");
                 CB->animation("P50GAR03");
@@ -550,14 +550,14 @@ static void tick_body(void) {
             ST(ST_VIE(34)) = VIE_DEAD;
             ST(V_ENGAGED_PERSONA) = 0;
             CB->stop_joindre(-34);
-            CB->divers_empile(DV_BONE_SOUND, 34, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, 34, 0);
             CB->animation("SP34IMP51");
             CB->animation("P34CAD");
             CB->pos_perso(34, 0, 0, 0, 2, "P34CAD", 0x22, 0);
             CB->divers_empile(DV_SCREEN, 2, 0);
         } else {
             CB->stop_joindre(-34);
-            CB->divers_empile(DV_BONE_SOUND, 34, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, 34, 0);
             CB->animation("SP34IMP06");
             CB->animation("P34GAR01");
             CB->combat(34, 0);
@@ -581,14 +581,14 @@ static void tick_body(void) {
             if (CB->divers(DV_HP, P_GUARDIAN5, -1) <= 1) {
                 ST(ST_VIE(P_GUARDIAN5)) = VIE_DEAD;
                 CB->stop_joindre(-P_GUARDIAN5);
-                CB->divers_empile(DV_BONE_SOUND, P_GUARDIAN5, 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, P_GUARDIAN5, 0);
                 CB->animation("SP45IMP53");
                 CB->animation("P45CAD");
                 CB->pos_perso(P_GUARDIAN5, 0, 0, 0, 2, "P45CAD", 4, 0);
                 CB->divers_empile(DV_SCREEN, 2, 0);
             } else {
                 CB->stop_joindre(-P_GUARDIAN5);
-                CB->divers_empile(DV_BONE_SOUND, P_GUARDIAN5, 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, P_GUARDIAN5, 0);
                 CB->animation("SP45IMP13");
                 CB->animation("P45IMP48");
                 CB->animation("P45GAR03");
@@ -620,14 +620,14 @@ static void tick_body(void) {
             if (CB->divers(DV_HP, P_GUARDIAN6, -1) <= 1) {
                 ST(ST_VIE(P_GUARDIAN6)) = VIE_DEAD;
                 CB->stop_joindre(-P_GUARDIAN6);
-                CB->divers_empile(DV_BONE_SOUND, P_GUARDIAN6, 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, P_GUARDIAN6, 0);
                 CB->animation("SP46IMP53");
                 CB->animation("P46CAD");
                 CB->pos_perso(P_GUARDIAN6, 0, 0, 0, 2, "P46CAD", 5, 0);
                 CB->divers_empile(DV_SCREEN, 2, 0);
             } else {
                 CB->stop_joindre(-P_GUARDIAN6);
-                CB->divers_empile(DV_BONE_SOUND, P_GUARDIAN6, 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, P_GUARDIAN6, 0);
                 CB->animation("SP46IMP13");
                 CB->animation("P46IMP48");
                 CB->animation("P46GAR03");
@@ -651,7 +651,7 @@ static void tick_body(void) {
         CB->select_pile(1, 2);
         CB->combat(P_GUARDIAN7, -1);
         CB->stop_joindre(-P_GUARDIAN7);
-        CB->divers_empile(DV_BONE_SOUND, P_GUARDIAN7, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, P_GUARDIAN7, 0);
         CB->animation("SP47IMP55");
         CB->animation("P47CAD");
         CB->pos_perso(P_GUARDIAN7, 0, 0, 0, 2, "P47CAD", 6, 0);
@@ -1621,12 +1621,12 @@ static void tick_body(void) {
             if (CB->divers(DV_HP, P_GUARDIAN10, -1) <= 1) {
                 ST(ST_VIE(P_GUARDIAN10)) = VIE_DEAD;
                 CB->stop_joindre(-P_GUARDIAN10);
-                CB->divers_empile(DV_BONE_SOUND, P_GUARDIAN10, 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, P_GUARDIAN10, 0);
                 CB->animation("SP50IMP53");
                 CB->divers_empile(DV_SCREEN, 2, 0);
             } else {
                 CB->stop_joindre(-P_GUARDIAN10);
-                CB->divers_empile(DV_BONE_SOUND, P_GUARDIAN10, 0);
+                CB->divers_empile(DV_BLOOD_AT_BONE, P_GUARDIAN10, 0);
                 CB->animation("SP50IMP13");
                 CB->animation("P50IMP48");
                 CB->animation("P50GAR03");

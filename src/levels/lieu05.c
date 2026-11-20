@@ -193,7 +193,7 @@ static void tick_body(void) {
         CB->select_pile(1, 2);
         CB->combat(P_BOGDARAN, -1);
         CB->stop_joindre(-P_BOGDARAN);
-        CB->divers_empile(DV_BONE_SOUND, P_BOGDARAN, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, P_BOGDARAN, 0);
         CB->animation("SP08IMP51");
         CB->modify_var(&ST(ST_VIE(P_BOGDARAN)), 2);
         CB->animation("P08CAD");
@@ -217,7 +217,7 @@ static void tick_body(void) {
         CB->combat(P_DELIA, -1);
         ST(V_ENGAGED_PERSONA) = 0;
         CB->stop_joindre(-P_DELIA);
-        CB->divers_empile(DV_BONE_SOUND, P_DELIA, 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, P_DELIA, 0);
         CB->animation("SP10IMP51");
         CB->animation("P10_65535");
         CB->animation("P10CAD");

@@ -1733,7 +1733,7 @@ static void trig30(void) {
             ST(ST_VIE(P_DELIA)) = VIE_DEAD;
             CB->stop_joindre(-P_DELIA);
             CB->combat(P_DELIA, 0);
-            CB->divers_empile(DV_BONE_SOUND, 10, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, 10, 0);
             CB->select_pile(0, 1);
             CB->modify_var(&ST(ST_SCRIPT_BUSY), 0);
             return;
@@ -2112,7 +2112,7 @@ static void trig32(void) {
             CB->select_pile(1, 2);
             CB->stop_joindre(-P_KALHI33);
             CB->combat(P_KALHI33, 0);
-            CB->divers_empile(DV_BONE_SOUND, 33, 0);
+            CB->divers_empile(DV_BLOOD_AT_BONE, 33, 0);
             CB->select_pile(0, 1);
             CB->modify_var(&ST(ST_SCRIPT_BUSY), 0);
             return;

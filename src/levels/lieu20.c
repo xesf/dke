@@ -100,7 +100,7 @@ static void tick_body(void) {
             ST(V_EVENT_2) = 0;
             CB->select_pile(0, 2);
             CB->divers(DV_HP, ST(ST_HERO), 1);
-            CB->divers(DV_BONE_SOUND, ST(ST_HERO), 0);
+            CB->divers(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
             /* 0x8C23 */
             if (ST(ST_PLAYER_WEAPON) == 0) {
                 CB->animation("SP01IMP51");
@@ -741,14 +741,14 @@ static void tick_body(void) {
                 if (CB->divers(DV_HP, P_GUARDIAN9, -1) <= 1) {
                     ST(ST_VIE(P_GUARDIAN9)) = VIE_DEAD;
                     CB->stop_joindre(-P_GUARDIAN9);
-                    CB->divers_empile(DV_BONE_SOUND, P_GUARDIAN9, 0);
+                    CB->divers_empile(DV_BLOOD_AT_BONE, P_GUARDIAN9, 0);
                     CB->animation("SP49IMP52");
                     CB->animation("P49CAD");
                     CB->pos_perso(P_GUARDIAN9, 0, 0, 0, 2, "P49CAD", 6, 0);
                     CB->divers_empile(DV_SCREEN, 2, 0);
                 } else {
                     CB->stop_joindre(-P_GUARDIAN9);
-                    CB->divers_empile(DV_BONE_SOUND, P_GUARDIAN9, 0);
+                    CB->divers_empile(DV_BLOOD_AT_BONE, P_GUARDIAN9, 0);
                     CB->animation("SP49IMP12");
                     CB->animation("P49IMP47");
                     CB->animation("P49GAR02");

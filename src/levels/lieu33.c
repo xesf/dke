@@ -575,7 +575,7 @@ static void tick_body(void) {
         CB->stop_joindre(-P_GUARDIAN15);
         CB->select_pile(2, 2);
         ST(V_EVENT_38) = 0;
-        CB->divers_empile(DV_BONE_SOUND, ST(ST_HERO), 0);
+        CB->divers_empile(DV_BLOOD_AT_BONE, ST(ST_HERO), 0);
         /* 0xA1A4 */
         if (ST(ST_HERO) == P_ARKHAN2) {
             CB->animation("SP02IMP55");
