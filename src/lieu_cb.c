@@ -433,7 +433,15 @@ extern void scene_score_set(i32 v);
 extern void scene_hud_refresh(void);
 /* End of game requested (op 27, ending movies): returns 1 once, then clears. */
 i32 lieu_game_exit_take(void);
-i32 lieu_game_exit_take(void) { i32 r = g_game_exit_code == 3; g_game_exit_code = 0; return r; }
+i32 lieu_game_exit_take(void) {
+    i32 r = g_game_exit_code == 3;
+    g_game_exit_code = 0;
+    if (r && getenv("DKE_AUTOPLAY")) {          /* the bot keeps going: log the ending and stay */
+        print("auto: GAME END requested in level %d\n", g_lieu_level);
+        return 0;
+    }
+    return r;
+}
 u8         g_movie_seen[8];          /* byte_507350: bit n = movie SCnn seen */
 
 /* slot 3 sub_444AC0 "Cinematique": QUEUES type 3, strcpy(node+0x30, name).

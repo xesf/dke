@@ -269,6 +269,14 @@ static i32 plan(i32 px, i32 pz, i32 tx, i32 tz) {
 static i32 walk(system_t *sys, entity_t *p, i32 tx, i32 tz, i32 hx, i32 hz, u32 t) {
     i32 x = EROOT(p)->pos[0], z = EROOT(p)->pos[2];
     if (abs(x - tx) <= hx && abs(z - tz) <= hz) return 1;
+    if (getenv("DKE_AUTOPLAY_DBG")) {
+        static u32 dt;
+        if (t - dt > 500) {
+            dt = t;
+            print("auto: walk pos (%d,%d) rot %04X -> (%d,%d) cEC=%d cF4=%d d04=%d d60=%d lock=%d\n", x, z, EROOT(p)->rot[2] & 0xFFFF, tx, tz,
+                  E32(p, 0xCEC), E32(p, 0xCF4), E32(p, 0xD04), E32(p, 0xD60), g_player_movement_locked);
+        }
+    }
     if (abs(x - s_lastx) + abs(z - s_lastz) > 150) { s_lastx = x; s_lastz = z; s_t_moved = t; }
     if (t - s_t_moved > 2500 || t - s_t_walk > 40000) return -1;
     i32 wx = tx, wz = tz;
@@ -396,7 +404,13 @@ void autoplay_tick(system_t *sys) {
         i32 r = walk(sys, p, cx, cz, hx, hz, t);
         if (r < 0) {
             s_unreach[s_level][s_zone] = 1;
-            print("auto: L%d zone %d unreachable from (%d,%d)\n", s_level, s_zone, EROOT(p)->pos[0], EROOT(p)->pos[2]);
+            i32 cx, cz, sx, sz, act, pcx = -1, pcz = -1;
+            lieu_zone_get(s_zone, &cx, &cz, &sx, &sz, &act);
+            cell_of(EROOT(p)->pos[0], EROOT(p)->pos[2], &pcx, &pcz);
+            print("auto: L%d zone %d unreachable from (%d,%d) cell (%d,%d)=%d, zone at (%d,%d) path %d/%d, grid origin (%d,%d) cell %dx%d\n",
+                  s_level, s_zone, EROOT(p)->pos[0], EROOT(p)->pos[2], pcx, pcz,
+                  (pcx >= 0 && pcx < NG && pcz >= 0 && pcz < NG) ? g_nav.grid[pcz * NG + pcx] : -1, cx, cz, s_pi, s_plen,
+                  g_nav.world_x_origin, g_nav.world_y_origin, g_nav.cell_width, g_nav.cell_height);
             s_phase = PH_IDLE;
         } else if (r > 0) {
             EROOT(p)->rot[2] = s_head * (0x10000 / HEADINGS);
