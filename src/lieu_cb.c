@@ -1453,9 +1453,8 @@ static i32 cb_divers(i32 op, i32 a, i32 b) {
      * with +0xD90 != 0: D90 = 0, sub_42D81F(e, 1) (end timed effect).
      * Then if dword_4FF098 != 0: dword_4FF098 = 1. */
     case 35:
-        /* TODO the whole case sits under `if (renderer_instance)` — with no
-         * audio in dke that is never true, so the D90 resets do not run
-         * either. Keep that gate when audio lands. */
+        /* The +0xD90 lip-sync clocks are not ported, so only the sound stops. */
+        sfx_voice_cut();
         return 0;
 
     /* op 36 @ 0x448A45 — actor a loaded and not in combat (+0xD60 == 0):

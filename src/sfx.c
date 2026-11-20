@@ -808,6 +808,13 @@ void sfx_voice_stop(void) {
     audio_unlock();
 }
 
+/* DIVERS op 35: stop whatever plays in renderer_instance[0] and free it. */
+void sfx_voice_cut(void) {
+    audio_lock();
+    if (g_inst_used[SFX_INST_VOICE]) inst_free(SFX_INST_VOICE);
+    audio_unlock();
+}
+
 /* A sound from wav>anims> (e.g. "trans" for sub_42E0E0). */
 /* play_entity_sound with a name from the sound-effect dir. */
 static void sfx_entity_named_impl(const entity_t *e, const c8 *name) { sfx_play_entity(e, sfx_get_id(name, g_dir_sfx)); }
