@@ -174,7 +174,13 @@ The door opens, Thanandar explodes, the Runka heals Arkhan. Credits (level 52).
 - in an off-route room it pokes the nearest zones first and leaves toward the route goal over the
   static room graph.
 
-Status (2026-11-21): 1 to 2 works; room 7 (training with Phedoria) never ends for the bot because it
-does not win the duel; the provost's door (level 2 zone 1) needs Light mode and a dialogue, which
-the bot does not do; ambiguous zones in level 2 still drag it into rooms 3, 8 and 9. Next: give the
-bot Light/Dark mode switching (Tab) and per-step scripted actions for dialogues and duels.
+Route syntax: `room[:tries]`, e.g. `1,2,6:0,8,10:0,20:25,21,22`; `:0` passes through a room (use it
+where idle poking angers someone: Dhorkan's office ends the game if you ignore his orders). A zone
+whose trigger can reach several rooms is seeded with the route room it can reach.
+
+Status (2026-11-21): with `DKE_AUTOPLAY_BUDGET=8 DKE_AUTOPLAY_ROUTE=1,2,6:0,8,10:0,20:25,21,22` the bot
+goes bedroom (1) -> barracks (2) -> provost (6, the orders dialogue matches the walkthrough) ->
+platform (8) -> upper square (10) -> temple square (20) -> 21, then loops 20 <-> 21. In level 20 a
+guard repeats "Ah! There you are! Go to your post..." until the Lory/Rylsadhar conversation has
+happened, and the bot does not know how to trigger it. Training duel (room 7) and Light/Dark mode
+are not handled yet. A game-over (GAME END) leaves the bot dead in place; it needs a save/reload.

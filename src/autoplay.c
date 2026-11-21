@@ -139,34 +139,48 @@ static void teleport(entity_t *p, i32 x, i32 z, i32 head) {
 }
 
 static i32 room_ok(i32 r) { return r > 0 && r < ROOMS; }
+static i32 s_route[64], s_nroute = -1;
+static i32 route_goal(void);
 
 /* Seed the exits the level script is known to have (zone n runs trigger n). Zones whose trigger
  * can reach several rooms are left to be learned. */
 static void seed_exits(i32 r) {
     if (!room_ok(r)) return;
+    route_goal();
     for (u32 i = 0; i < sizeof k_zone_exits / sizeof k_zone_exits[0]; i++) {
         i32 z = k_zone_exits[i][1];
         if (k_zone_exits[i][0] != r || z <= 0 || z >= ZONES || s_exit_known[r][z]) continue;
         i32 n = 0;
         for (u32 j = 0; j < sizeof k_zone_exits / sizeof k_zone_exits[0]; j++)
             n += k_zone_exits[j][0] == r && k_zone_exits[j][1] == z;
-        if (n != 1) continue;
+        i32 tgt = k_zone_exits[i][2];
+        if (n != 1) {                           /* several targets: seed the one the route wants */
+            tgt = 0;
+            for (u32 j = 0; j < sizeof k_zone_exits / sizeof k_zone_exits[0]; j++)
+                if (k_zone_exits[j][0] == r && k_zone_exits[j][1] == z)
+                    for (i32 k = 0; k < s_nroute; k++)
+                        if (s_route[k] == k_zone_exits[j][2] && !tgt) tgt = k_zone_exits[j][2];
+            if (!tgt) continue;
+        }
         s_exit_known[r][z] = 1;
         s_exit_seeded[r][z] = 1;
-        s_exit[r][z] = (i8)k_zone_exits[i][2];
+        s_exit[r][z] = (i8)tgt;
     }
 }
 
 /* DKE_AUTOPLAY_ROUTE="2,8,10,20": rooms in story order. A room counts as done once its tries are
  * exhausted; exits toward the first undone route room are preferred. */
-static i32 s_route[64], s_nroute = -1;
+static i32 s_budget[ROOMS];                   /* per-room try budget from "room:n", -1 = default */
 static u8  s_done[ROOMS];
 static i32 route_goal(void) {
     if (s_nroute < 0) {
         s_nroute = 0;
+        for (i32 i = 0; i < ROOMS; i++) s_budget[i] = -1;
         const c8 *e = getenv("DKE_AUTOPLAY_ROUTE");
         while (e && *e && s_nroute < 64) {
             s_route[s_nroute++] = atoi(e);
+            const c8 *col = strchr(e, ':'), *com = strchr(e, ',');
+            if (col && (!com || col < com) && room_ok(atoi(e))) s_budget[atoi(e)] = atoi(col + 1);
             const c8 *c = strchr(e, ',');
             e = c ? c + 1 : NULL;
         }
@@ -445,7 +459,7 @@ void autoplay_tick(system_t *sys) {
             s_exit_known[s_last_room][s_cur_zone] = 1;
             s_exit[s_last_room][s_cur_zone] = (i8)to;
         }
-        print("auto: entered level %d from %d (progress so far %d)\n", to, s_level, s_progress_total);
+        print("auto: entered level %d from %d (progress so far %d, hero %d)\n", to, s_level, s_progress_total, *lieu_state_slot(ST_HERO));
         s_level = to;
         seed_exits(to);
         s_tries_here = 0;
@@ -499,6 +513,8 @@ void autoplay_tick(system_t *sys) {
         s_px = EROOT(p)->pos[0]; s_pz = EROOT(p)->pos[2];
         seed_exits(s_level);
         i32 budget = getenv("DKE_AUTOPLAY_BUDGET") ? atoi(getenv("DKE_AUTOPLAY_BUDGET")) : 40;
+        route_goal();
+        if (room_ok(s_level) && s_nroute > 0 && s_budget[s_level] >= 0) budget = s_budget[s_level];
         i32 have = (s_nroute > 0 && on_route(s_level) && s_tries_here >= budget) ? 0 : next_try();
         s_tries_here += have;
         if (!have && on_route(s_level)) s_done[s_level] = 1;
