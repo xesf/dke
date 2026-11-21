@@ -268,6 +268,14 @@ static i32 actor_collide(entity_t *e, i32 flags) {
         for (i32 i = 0; i < OBJ_SLOTS; i++) coll_point(object_poly(i), px, pz);   /* 0x45A0xx */
     }
     if (getenv("DKE_COLLDBG") && e == g_player_entity && g_cand_n) {
+        static const void *dumped;
+        if (dumped != g_world.world_controller && g_cand_obj[0] == g_world.world_controller) {
+            dumped = g_world.world_controller;
+            const sol_limit_t *w = g_world.world_controller;
+            print("coll: world boundary flags=%x n=%d:", w->flags, w->vertex_count);
+            for (i32 i = 0; i < w->vertex_count; i++) print(" (%d,%d)", w->vertices[i][0], w->vertices[i][2]);
+            print("\n");
+        }
         i32 zi = -1;
         for (i32 i = 0; i < g_world.num_collisions; i++)
             if (g_world.collision_zones[i] == g_cand_obj[0]) zi = i;

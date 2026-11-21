@@ -219,8 +219,16 @@ static i32 cell_of(i32 x, i32 z, i32 *cx, i32 *cz) {
     return *cx >= 0 && *cx < NG && *cz >= 0 && *cz < NG;
 }
 static i32 s_avoid_target = -1;
+static i32 s_clear;                            /* 1: keep one free cell away from walls (door posts snag the hero) */
+static i32 raw_free(i32 cx, i32 cz) {
+    return cx >= 0 && cx < NG && cz >= 0 && cz < NG && g_nav.grid[cz * NG + cx] == NAV_FREE;
+}
 static i32 cell_free(i32 cx, i32 cz) {
-    if (!(cx >= 0 && cx < NG && cz >= 0 && cz < NG && g_nav.grid[cz * NG + cx] == NAV_FREE)) return 0;
+    if (!raw_free(cx, cz)) return 0;
+    if (s_clear)
+        for (i32 j = -s_clear; j <= s_clear; j++)
+            for (i32 i = -s_clear; i <= s_clear; i++)
+                if (!raw_free(cx + i, cz + j)) return 0;
     /* Do not cross a known exit on the way to something else. */
     i32 wx = g_nav.world_x_origin + cx * g_nav.cell_width + g_nav.cell_width / 2;
     i32 wz = g_nav.world_y_origin + cz * g_nav.cell_height + g_nav.cell_height / 2;
@@ -229,7 +237,7 @@ static i32 cell_free(i32 cx, i32 cz) {
     return 1;
 }
 /* Path of cell centres from (px,pz) to the free cell nearest (tx,tz). */
-static i32 plan(i32 px, i32 pz, i32 tx, i32 tz) {
+static i32 plan1(i32 px, i32 pz, i32 tx, i32 tz, i32 *miss) {
     static i16 prev[NG * NG];
     static i32 q[NG * NG];
     i32 sx, sz, gx, gz;
@@ -262,7 +270,18 @@ static i32 plan(i32 px, i32 pz, i32 tx, i32 tz) {
         s_path[i][1] = (i16)(c / NG);
     }
     s_pi = 1;                                    /* [0] is the start cell */
+    *miss = bestd;
     return 1;
+}
+static i32 plan(i32 px, i32 pz, i32 tx, i32 tz) {
+    i32 miss = 1 << 30;
+    i32 ok = 0;
+    for (s_clear = 5; s_clear >= 0; s_clear -= (s_clear > 2 ? 2 : 1)) {   /* 5, 3, 2, 1, 0 cells of clearance */
+        ok = plan1(px, pz, tx, tz, &miss);
+        if (ok && miss <= 2) break;
+    }
+    s_clear = 0;
+    return ok;
 }
 
 /* One frame of walking toward (tx,tz): 1 arrived, -1 gave up, 0 walking. */
@@ -278,6 +297,9 @@ static i32 walk(system_t *sys, entity_t *p, i32 tx, i32 tz, i32 hx, i32 hz, u32 
         }
     }
     if (abs(x - s_lastx) + abs(z - s_lastz) > 150) { s_lastx = x; s_lastz = z; s_t_moved = t; }
+    static u32 esc_until, esc_n;
+    if (t - s_t_moved > 1200 && t >= esc_until && esc_n < 6) { esc_until = t + 1300; esc_n++; s_t_moved += 1300; }  /* sidestep a snag */
+    if (t > esc_until + 3000) esc_n = 0;
     if (t - s_t_moved > 2500 || t - s_t_walk > 40000) return -1;
     i32 wx = tx, wz = tz;
     while (s_pi < s_plen) {
@@ -289,6 +311,7 @@ static i32 walk(system_t *sys, entity_t *p, i32 tx, i32 tz, i32 hx, i32 hz, u32 
     if (s_pi >= s_plen) { wx = tx; wz = tz; }
     f64 dx = (f64)(wx - x), dz = (f64)(wz - z);
     i32 want = (i32)(-atan2(dx, dz) * 65536.0 / (2.0 * 3.14159265358979)) & 0xFFFF;
+    if (t < esc_until) want = (want + (esc_n & 1 ? 0x3000 : -0x3000)) & 0xFFFF;
     i32 d = (want - (EROOT(p)->rot[2] & 0xFFFF)) & 0xFFFF;
     if (d > 0x8000) d -= 0x10000;
     if (abs(d) > 0x1800) EROOT(p)->rot[2] = want;  /* big turns: face at once, keys are slow */
@@ -411,6 +434,17 @@ void autoplay_tick(system_t *sys) {
                   s_level, s_zone, EROOT(p)->pos[0], EROOT(p)->pos[2], pcx, pcz,
                   (pcx >= 0 && pcx < NG && pcz >= 0 && pcz < NG) ? g_nav.grid[pcz * NG + pcx] : -1, cx, cz, s_pi, s_plen,
                   g_nav.world_x_origin, g_nav.world_y_origin, g_nav.cell_width, g_nav.cell_height);
+            if (getenv("DKE_AUTOPLAY_DBG") && pcx >= 0)
+                for (i32 dz = -5; dz <= 5; dz++) {
+                    c8 row[32]; i32 k = 0;
+                    for (i32 dx = -8; dx <= 8; dx++) {
+                        i32 x = pcx + dx, z = pcz + dz;
+                        row[k++] = (x < 0 || x >= NG || z < 0 || z >= NG) ? ' ' :
+                            (dx == 0 && dz == 0) ? '@' : " .#B"[g_nav.grid[z * NG + x] == NAV_FREE ? 1 : g_nav.grid[z * NG + x] == NAV_WALL ? 2 : 3];
+                    }
+                    row[k] = 0;
+                    print("auto:   %s\n", row);
+                }
             s_phase = PH_IDLE;
         } else if (r > 0) {
             EROOT(p)->rot[2] = s_head * (0x10000 / HEADINGS);
