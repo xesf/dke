@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "autoplay.h"
+#include "autoplay_graph.h"
 #include "actor.h"
 #include "entity.h"
 #include "state.h"
@@ -56,6 +57,7 @@ static i32 s_zone, s_head, s_item, s_is_exit; /* current try */
 static u8  s_tried[ROOMS][ZONES][TRIES];
 static i8  s_exit[ROOMS][ZONES];             /* target room, 0 = not an exit (known) */
 static u8  s_exit_known[ROOMS][ZONES];
+static u8  s_exit_seeded[ROOMS][ZONES];      /* from the level script: stays an exit even when it refuses now */
 static u8  s_room_zone[ROOMS][ZONES];        /* zone seen in that room */
 static i32 s_visits[ROOMS];
 static u8  s_unreach[ROOMS][ZONES];      /* walk gave up this epoch */
@@ -138,6 +140,42 @@ static void teleport(entity_t *p, i32 x, i32 z, i32 head) {
 
 static i32 room_ok(i32 r) { return r > 0 && r < ROOMS; }
 
+/* Seed the exits the level script is known to have (zone n runs trigger n). Zones whose trigger
+ * can reach several rooms are left to be learned. */
+static void seed_exits(i32 r) {
+    if (!room_ok(r)) return;
+    for (u32 i = 0; i < sizeof k_zone_exits / sizeof k_zone_exits[0]; i++) {
+        i32 z = k_zone_exits[i][1];
+        if (k_zone_exits[i][0] != r || z <= 0 || z >= ZONES || s_exit_known[r][z]) continue;
+        i32 n = 0;
+        for (u32 j = 0; j < sizeof k_zone_exits / sizeof k_zone_exits[0]; j++)
+            n += k_zone_exits[j][0] == r && k_zone_exits[j][1] == z;
+        if (n != 1) continue;
+        s_exit_known[r][z] = 1;
+        s_exit_seeded[r][z] = 1;
+        s_exit[r][z] = (i8)k_zone_exits[i][2];
+    }
+}
+
+/* DKE_AUTOPLAY_ROUTE="2,8,10,20": rooms in story order. A room counts as done once its tries are
+ * exhausted; exits toward the first undone route room are preferred. */
+static i32 s_route[64], s_nroute = -1;
+static u8  s_done[ROOMS];
+static i32 route_goal(void) {
+    if (s_nroute < 0) {
+        s_nroute = 0;
+        const c8 *e = getenv("DKE_AUTOPLAY_ROUTE");
+        while (e && *e && s_nroute < 64) {
+            s_route[s_nroute++] = atoi(e);
+            const c8 *c = strchr(e, ',');
+            e = c ? c + 1 : NULL;
+        }
+    }
+    for (i32 i = 0; i < s_nroute; i++)
+        if (room_ok(s_route[i]) && !s_done[s_route[i]]) return s_route[i];
+    return 0;
+}
+
 /* Untried work left in room r (zones seen there so far). */
 static i32 room_left(i32 r) {
     if (!room_ok(r)) return 0;
@@ -151,7 +189,59 @@ static i32 room_left(i32 r) {
 }
 
 /* Next untried (zone, heading-or-item) in this room, exits excluded. */
+static i32 s_px, s_pz, s_tries_here;
+/* First room to enter from `from` to reach `goal` over the static exit graph (0 if none). */
+static i32 next_hop(i32 from, i32 goal) {
+    enum { N = 128 };
+    i32 first[N] = {0}, q[N], h = 0, t = 0;
+    u8 seen[N] = {0};
+    if (from == goal || from >= N || goal >= N) return 0;
+    seen[from] = 1; q[t++] = from;
+    while (h < t) {
+        i32 a = q[h++];
+        for (u32 i = 0; i < sizeof k_room_edges / sizeof k_room_edges[0]; i++) {
+            if (k_room_edges[i][0] != a) continue;
+            i32 b = k_room_edges[i][1];
+            if (seen[b]) continue;
+            seen[b] = 1; first[b] = a == from ? b : first[a];
+            if (b == goal) return first[b];
+            q[t++] = b;
+        }
+    }
+    return 0;
+}
+static i32 on_route(i32 r) {
+    route_goal();
+    for (i32 i = 0; i < s_nroute; i++) if (s_route[i] == r) return 1;
+    return s_nroute == 0;
+}
+/* Off-route room while following a route: poke only the nearest untried zone (the way back is
+ * usually where you arrive), one heading, no items. */
+static i32 next_try_near(void) {
+    i32 r = s_level, bz = 0;
+    i64 bd = 1LL << 60;
+    for (i32 z = 1; z < ZONES; z++) {
+        i32 cx, cz, sx, sz, act;
+        if (!lieu_zone_get(z, &cx, &cz, &sx, &sz, &act)) continue;
+        s_room_zone[r][z] = 1;
+        if ((s_exit_known[r][z] && s_exit[r][z]) || s_unreach[r][z] || s_tried[r][z][0]) continue;
+        i64 d = (i64)(cx - s_px) * (cx - s_px) + (i64)(cz - s_pz) * (cz - s_pz);
+        if (d < bd) { bd = d; bz = z; }
+    }
+    if (!bz) return 0;
+    s_zone = bz; s_head = 0; s_item = -1; s_is_exit = 0;
+    s_tried[r][bz][0] = 1;
+    return 1;
+}
+static i32 hop_exit_known(void) {
+    i32 goal = route_goal(), h = goal ? next_hop(s_level, goal) : 0;
+    for (i32 z = 1; h && z < ZONES; z++)
+        if (s_exit_known[s_level][z] && s_exit[s_level][z] == h && !s_unreach[s_level][z]) return 1;
+    return 0;
+}
 static i32 next_try(void) {
+    if (!on_route(s_level) && hop_exit_known()) return 0;     /* off route: leave as soon as the way is known */
+    if (!on_route(s_level)) return next_try_near();
     i32 r = s_level;
     for (i32 pass = 0; pass < 2; pass++) {
         for (i32 z = 1; z < ZONES; z++) {
@@ -178,17 +268,26 @@ static i32 next_try(void) {
 /* Room exhausted: take the exit toward the room with the most work left
  * (one hop; ties go to the least visited). */
 static i32 pick_exit(void) {
-    i32 r = s_level, best = -1, best_left = 0, best_vis = 1 << 30;
+    i32 r = s_level, best = -1, best_left = 0, best_vis = 1 << 30, goal = route_goal();
     for (i32 z = 1; z < ZONES; z++) {
         i32 cx, cz, sx, sz, act;
         if (!s_exit_known[r][z] || !s_exit[r][z] || s_unreach[r][z]) continue;
         if (!lieu_zone_get(z, &cx, &cz, &sx, &sz, &act)) continue;
         i32 t = s_exit[r][z], left = room_left(t);
+        if (goal && t == goal) { left += 100000; }
+        else if (goal && t == next_hop(r, goal)) { left += 50000; }
         if (left > best_left || (left == best_left && s_visits[t] < best_vis)) {
             best = z; best_left = left; best_vis = s_visits[t];
         }
     }
-    if (best < 0) return 0;
+    if (best < 0) {
+        for (i32 z = 1; z < ZONES; z++)
+            if (s_exit_known[r][z] && s_exit[r][z]) {
+                i32 cx, cz, sx, sz, act;
+                print("auto: pick_exit L%d zone %d -> %d unreach=%d zone_get=%d\n", r, z, s_exit[r][z], s_unreach[r][z], lieu_zone_get(z, &cx, &cz, &sx, &sz, &act));
+            }
+        return 0;
+    }
     /* Nothing left anywhere next door: wander to the least visited room. */
     s_zone = best; s_head = 0; s_item = -1; s_is_exit = 1;
     return 1;
@@ -341,11 +440,15 @@ void autoplay_tick(system_t *sys) {
         i32 to = state->current_level_id;
         /* A room change within 3 s of standing in a zone: that zone is an exit. */
         if (room_ok(s_last_room) && s_cur_zone > 0) {
+            if (s_exit_known[s_last_room][s_cur_zone] && s_exit[s_last_room][s_cur_zone] != to)
+                print("auto: exit table says L%d zone %d -> %d, went to %d\n", s_last_room, s_cur_zone, s_exit[s_last_room][s_cur_zone], to);
             s_exit_known[s_last_room][s_cur_zone] = 1;
             s_exit[s_last_room][s_cur_zone] = (i8)to;
         }
         print("auto: entered level %d from %d (progress so far %d)\n", to, s_level, s_progress_total);
         s_level = to;
+        seed_exits(to);
+        s_tries_here = 0;
         if (room_ok(to)) s_visits[to]++;
         memset(s_volatile, 0, sizeof(s_volatile));
         snap(s_idle);
@@ -393,7 +496,13 @@ void autoplay_tick(system_t *sys) {
         if (t - s_t_phase < 300) return;
         learn_volatile();
         s_nitems = inv_list(s_items, MAX_ITEMS);
-        if (!next_try() && !pick_exit()) {
+        s_px = EROOT(p)->pos[0]; s_pz = EROOT(p)->pos[2];
+        seed_exits(s_level);
+        i32 budget = getenv("DKE_AUTOPLAY_BUDGET") ? atoi(getenv("DKE_AUTOPLAY_BUDGET")) : 40;
+        i32 have = (s_nroute > 0 && on_route(s_level) && s_tries_here >= budget) ? 0 : next_try();
+        s_tries_here += have;
+        if (!have && on_route(s_level)) s_done[s_level] = 1;
+        if (!have && !pick_exit()) {
             if (!s_stuck_logged) {
                 s_stuck_logged = 1;
                 print("auto: STUCK in level %d (no try or exit left, %d items)\n", s_level, s_nitems);
@@ -456,10 +565,22 @@ void autoplay_tick(system_t *sys) {
     }
     case PH_MOVE:
         if (t - s_t_phase < 400) return;
-        if (s_is_exit) {                         /* stand in the exit and wait */
-            if (t - s_t_phase > 4000) {
-                s_exit_known[s_level][s_zone] = 1;
-                s_exit[s_level][s_zone] = 0;     /* did not leave: not an exit (now) */
+        if (s_is_exit) {                         /* stand in the exit, turn and use it (door exits need the action key) */
+            static u32 tl;
+            if (t - tl > 600) {
+                tl = t;
+                EROOT(p)->rot[2] = ((t / 600) % HEADINGS) * (0x10000 / HEADINGS);
+                sys->actions[32] = 1;
+            }
+            if (t - s_t_phase > 6000) {
+                if (s_exit_seeded[s_level][s_zone]) {   /* the script says exit: story not ready, do more first */
+                    s_tries_here = -60;
+                    s_done[s_level] = 0;
+                    reopen_all();
+                } else {
+                    s_exit_known[s_level][s_zone] = 1;
+                    s_exit[s_level][s_zone] = 0;     /* did not leave: not an exit (now) */
+                }
                 s_phase = PH_IDLE;
             }
             return;

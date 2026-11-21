@@ -162,3 +162,19 @@ The door opens, Thanandar explodes, the Runka heals Arkhan. Credits (level 52).
 - Known results (2026-11-21): all 55 levels load and run 20000 frames with the blind bot and no
   crash; the blind bot loops between levels 2 and 3 and cannot follow the story. A route-driven
   bot built from the checkpoints above is the next step.
+
+## Route bot (DKE_AUTOPLAY_ROUTE)
+
+`DKE_AUTOPLAY_ROUTE=1,2,6,8,10,20,27` lists rooms in story order (each once). The bot:
+
+- seeds exits from the level scripts (`src/autoplay_graph.h`: zone n runs trigger n, which calls
+  `change_piece(target)`; zones that can reach several rooms are left to be learned);
+- spends up to `DKE_AUTOPLAY_BUDGET` tries (default 40) in a route room, then takes the exit to the
+  next undone route room; a seeded exit that refuses (story not ready) adds 60 more tries;
+- in an off-route room it pokes the nearest zones first and leaves toward the route goal over the
+  static room graph.
+
+Status (2026-11-21): 1 to 2 works; room 7 (training with Phedoria) never ends for the bot because it
+does not win the duel; the provost's door (level 2 zone 1) needs Light mode and a dialogue, which
+the bot does not do; ambiguous zones in level 2 still drag it into rooms 3, 8 and 9. Next: give the
+bot Light/Dark mode switching (Tab) and per-step scripted actions for dialogues and duels.
